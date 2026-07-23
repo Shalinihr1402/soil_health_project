@@ -1,0 +1,1064 @@
+<!doctype html>
+<html lang="en" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AI-Powered Soil Health Analytics Platform - Get personalized crop recommendations and soil analysis">
+  <meta name="theme-color" content="#2D5A27">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>{% block title %}Soil Health Analytics{% endblock %} | SoilSense</title>
+  
+  <!-- Preload critical assets -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Custom CSS -->
+  <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+  
+  {% block extra_css %}{% endblock %}
+  
+  <style>
+    :root {
+      --sidebar-width: 280px;
+      --topbar-height: 64px;
+      --brand-color: #1b4332;
+      --brand-hover: #0f2818;
+      --brand-light: #40916c;
+      --brand-accent: #d9a441;
+      --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --bs-primary: #1b4332;
+      --bs-primary-rgb: 27, 67, 50;
+    }
+
+    /* Dark Mode Variables */
+    [data-bs-theme="dark"] {
+      --bs-body-bg: #1a1d20;
+      --bs-body-color: #e1e1e1;
+      --brand-color: #40916c;
+      --brand-hover: #52b788;
+    }
+
+    /* Retheme Bootstrap's "primary" utilities to the brand palette.
+       Bootstrap's CDN build bakes hex colors into these classes at compile time,
+       so overriding --bs-primary alone would not change them — each is overridden directly. */
+    .btn-primary {
+      --bs-btn-bg: var(--brand-color);
+      --bs-btn-border-color: var(--brand-color);
+      --bs-btn-hover-bg: var(--brand-hover);
+      --bs-btn-hover-border-color: var(--brand-hover);
+      --bs-btn-active-bg: var(--brand-hover);
+      --bs-btn-active-border-color: var(--brand-hover);
+      --bs-btn-disabled-bg: var(--brand-color);
+      --bs-btn-disabled-border-color: var(--brand-color);
+    }
+
+    .btn-outline-primary {
+      --bs-btn-color: var(--brand-color);
+      --bs-btn-border-color: var(--brand-color);
+      --bs-btn-hover-bg: var(--brand-color);
+      --bs-btn-hover-border-color: var(--brand-color);
+      --bs-btn-active-bg: var(--brand-color);
+      --bs-btn-active-border-color: var(--brand-color);
+    }
+
+    .text-primary { color: var(--brand-color) !important; }
+    .bg-primary { background-color: var(--brand-color) !important; }
+    .border-primary { border-color: var(--brand-color) !important; }
+    .bg-primary-subtle { background-color: rgba(27, 67, 50, 0.1) !important; }
+    .text-primary-emphasis { color: var(--brand-color) !important; }
+
+    .form-check-input:checked {
+      background-color: var(--brand-color);
+      border-color: var(--brand-color);
+    }
+
+    a { color: var(--brand-color); }
+    a:hover { color: var(--brand-hover); }
+
+    /* Notification Dropdown */
+    .notification-menu {
+      width: 340px;
+      border: none;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .notification-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 1.1rem;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--bs-body-color);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .notification-item {
+      display: flex;
+      gap: 0.75rem;
+      align-items: flex-start;
+      padding: 0.75rem 1.1rem;
+      text-decoration: none;
+      color: inherit;
+      transition: background 0.15s ease;
+    }
+
+    .notification-item:hover {
+      background: rgba(27, 67, 50, 0.06);
+      color: inherit;
+    }
+
+    .notification-icon {
+      flex-shrink: 0;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 0.95rem;
+    }
+
+    .notification-icon.success { background: rgba(27, 67, 50, 0.1); color: var(--brand-color); }
+    .notification-icon.warning { background: rgba(217, 164, 65, 0.15); color: #b8842f; }
+
+    .notification-body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      min-width: 0;
+    }
+
+    .notification-message {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--bs-body-color);
+    }
+
+    .notification-time {
+      font-size: 0.75rem;
+      color: #9aa39c;
+    }
+
+    .notification-footer {
+      display: block;
+      text-align: center;
+      padding: 0.75rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--brand-color);
+      text-decoration: none;
+      border-top: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .notification-footer:hover {
+      background: rgba(27, 67, 50, 0.06);
+      color: var(--brand-hover);
+    }
+
+    .notification-empty {
+      padding: 2rem 1rem;
+      text-align: center;
+      color: #9aa39c;
+    }
+
+    .notification-empty i {
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .notification-empty p {
+      margin: 0;
+      font-size: 0.85rem;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bs-body-bg);
+      color: var(--bs-body-color);
+      transition: var(--transition-base);
+      overflow-x: hidden;
+    }
+    
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    /* Enhanced Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: linear-gradient(180deg, var(--brand-color) 0%, #1a3a17 100%);
+      color: white;
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      z-index: 1040;
+      transition: var(--transition-base);
+      box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar .offcanvas-header {
+      padding: 1.5rem;
+      background: rgba(0, 0, 0, 0.1);
+    }
+    
+    .brand {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1.5rem;
+      transition: var(--transition-base);
+    }
+    
+    .brand:hover {
+      color: rgba(255, 255, 255, 0.9);
+      transform: translateX(2px);
+    }
+    
+    .brand i {
+      font-size: 1.75rem;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .sidebar-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      overflow-y: auto;
+    }
+    
+    .sidebar-content::-webkit-scrollbar {
+      width: 4px;
+    }
+    
+    .sidebar-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+    
+    /* Navigation Links */
+    .nav-link {
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      transition: var(--transition-base);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: white;
+      transform: scaleY(0);
+      transition: transform 0.3s ease;
+    }
+    
+    .nav-link:hover {
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(4px);
+    }
+    
+    .nav-link:hover::before {
+      transform: scaleY(1);
+    }
+    
+    .nav-link.active {
+      color: white;
+      background: rgba(255, 255, 255, 0.2);
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .nav-link.active::before {
+      transform: scaleY(1);
+    }
+    
+    .nav-link.disabled {
+      color: rgba(255, 255, 255, 0.4);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    
+    .nav-link i {
+      font-size: 1.25rem;
+      width: 24px;
+      text-align: center;
+    }
+    
+    /* Badge in nav */
+    .nav-link .badge {
+      margin-left: auto;
+      font-size: 0.7rem;
+    }
+    
+    /* Sidebar Sections */
+    .nav-section {
+      margin-bottom: 1.5rem;
+    }
+    
+    .nav-section-title {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255, 255, 255, 0.5);
+      padding: 0 1rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+    
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .logout-button {
+      width: 100%;
+      text-align: left;
+      border: none;
+      background: rgba(220, 53, 69, 0.1);
+      color: #ff6b6b;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      transition: var(--transition-base);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.9rem;
+    }
+    
+    .logout-button:hover {
+      background: rgba(220, 53, 69, 0.2);
+      color: #ff4444;
+    }
+    
+    .logout-button i {
+      font-size: 1.25rem;
+      width: 24px;
+      text-align: center;
+    }
+    
+    /* Page Area */
+    .page-area {
+      flex: 1;
+      margin-left: var(--sidebar-width);
+      min-height: 100vh;
+      background: var(--bs-body-bg);
+      transition: var(--transition-base);
+    }
+    
+    /* Enhanced Topbar */
+    .topbar {
+      height: var(--topbar-height);
+      background: white;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+      display: flex;
+      align-items: center;
+      padding: 0 1.5rem;
+      position: sticky;
+      top: 0;
+      z-index: 1030;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(10px);
+      background: rgba(255, 255, 255, 0.95);
+    }
+    
+    [data-bs-theme="dark"] .topbar {
+      background: rgba(26, 29, 32, 0.95);
+      border-bottom-color: rgba(255, 255, 255, 0.05);
+    }
+    
+    .btn-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      color: var(--bs-body-color);
+      transition: var(--transition-base);
+      cursor: pointer;
+    }
+    
+    .btn-icon:hover {
+      background: rgba(0, 0, 0, 0.05);
+      transform: scale(1.05);
+    }
+    
+    [data-bs-theme="dark"] .btn-icon:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Search Bar */
+    .search-bar {
+      flex: 1;
+      max-width: 400px;
+      margin: 0 2rem;
+    }
+    
+    .search-input {
+      border: none;
+      background: rgba(0, 0, 0, 0.03);
+      border-radius: 12px;
+      padding: 0.5rem 1rem 0.5rem 2.5rem;
+      width: 100%;
+      transition: var(--transition-base);
+    }
+    
+    .search-input:focus {
+      outline: none;
+      background: rgba(0, 0, 0, 0.05);
+      box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+    }
+    
+    [data-bs-theme="dark"] .search-input {
+      background: rgba(255, 255, 255, 0.05);
+      color: white;
+    }
+    
+    /* Profile Summary */
+    .profile-summary {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+      padding: 0.5rem;
+      border-radius: 12px;
+      transition: var(--transition-base);
+    }
+    
+    .profile-summary:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    
+    .profile-avatar {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--brand-color), #4CAF50);
+      color: white;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    
+    /* Content Area */
+    .content-area {
+      padding: 2rem;
+      min-height: calc(100vh - var(--topbar-height));
+    }
+    
+    /* Page Transitions */
+    .page-transition {
+      animation: pageEnter 0.3s ease-out;
+    }
+    
+    @keyframes pageEnter {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Enhanced Alerts */
+    .alert {
+      border: none;
+      border-radius: 12px;
+      animation: slideDown 0.3s ease-out;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    
+    .loading-overlay[aria-hidden="true"] {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* Toast Container */
+    .toast-container {
+      z-index: 9999;
+    }
+    
+    .toast {
+      border: none;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Breadcrumb */
+    .breadcrumb {
+      margin-bottom: 1.5rem;
+    }
+    
+    .breadcrumb-item a {
+      color: var(--brand-color);
+      text-decoration: none;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 991.98px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+      
+      .sidebar.show {
+        transform: translateX(0);
+      }
+      
+      .page-area {
+        margin-left: 0;
+      }
+      
+      .content-area {
+        padding: 1rem;
+      }
+      
+      .topbar {
+        padding: 0 1rem;
+      }
+    }
+    
+    @media (min-width: 992px) {
+      .sidebar {
+        transform: translateX(0) !important;
+      }
+    }
+    
+    /* Utility Classes */
+    .text-brand { color: var(--brand-color); }
+    .bg-brand { background: var(--brand-color); }
+    .border-brand { border-color: var(--brand-color); }
+    
+    .cursor-pointer { cursor: pointer; }
+    .transition { transition: var(--transition-base); }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="sidebar">
+      <div class="offcanvas-header border-bottom">
+        <a class="brand" href="{{ url_for('dashboard') }}">
+          <i class="bi bi-flower1"></i> SoilSense
+        </a>
+        <button class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas" aria-label="Close navigation"></button>
+      </div>
+      
+      <div class="sidebar-content">
+        <!-- Desktop Brand -->
+        <a class="brand d-none d-lg-flex" href="{{ url_for('dashboard') }}">
+          <i class="bi bi-flower1"></i> SoilSense
+        </a>
+        
+        <!-- Main Navigation -->
+        <nav class="nav-section" aria-label="Main navigation">
+          <div class="nav-section-title">{{ t('main_menu') }}</div>
+          <div class="nav flex-column gap-1">
+            <!-- Dashboard -->
+            <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}"
+               href="{{ url_for('dashboard') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="View your dashboard">
+              <i class="bi bi-grid-1x2"></i> {{ t('dashboard') }}
+              {% if request.endpoint == 'dashboard' %}
+                <span class="badge bg-light text-dark">Active</span>
+              {% endif %}
+            </a>
+
+            <!-- New Prediction -->
+            <a class="nav-link {% if request.endpoint == 'home' %}active{% endif %}"
+               href="{{ url_for('home') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="Start new soil analysis">
+              <i class="bi bi-plus-circle"></i> {{ t('new_prediction') }}
+            </a>
+
+            <!-- History -->
+            <a class="nav-link {% if request.endpoint == 'history' %}active{% endif %}"
+               href="{{ url_for('history') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="View prediction history">
+              <i class="bi bi-clock-history"></i> {{ t('history') }}
+            </a>
+
+            <!-- Analytics -->
+            <a class="nav-link {% if request.endpoint == 'analytics' %}active{% endif %}"
+               href="{{ url_for('analytics') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="View analytics and insights">
+              <i class="bi bi-graph-up-arrow"></i> {{ t('analytics') }}
+            </a>
+
+            <!-- Reports -->
+            <a class="nav-link {% if request.endpoint == 'reports' %}active{% endif %}"
+               href="{{ url_for('reports') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="View generated reports">
+              <i class="bi bi-file-earmark-bar-graph"></i> {{ t('reports') }}
+            </a>
+          </div>
+        </nav>
+
+        <!-- Tools -->
+        <nav class="nav-section" aria-label="Tools">
+          <div class="nav-section-title">{{ t('tools') }}</div>
+          <div class="nav flex-column gap-1">
+            <!-- AI Assistant -->
+            <a class="nav-link {% if request.endpoint == 'chatbot' %}active{% endif %}"
+               href="{{ url_for('chatbot') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="Chat with AI assistant">
+              <i class="bi bi-robot"></i> {{ t('ai_assistant') }}
+              <span class="badge bg-info">Beta</span>
+            </a>
+
+            <!-- Weather -->
+            <a class="nav-link {% if request.endpoint == 'weather' %}active{% endif %}"
+               href="{{ url_for('weather') }}"
+               data-bs-toggle="tooltip"
+               data-bs-placement="right"
+               title="Check weather conditions">
+              <i class="bi bi-cloud-sun"></i> {{ t('weather') }}
+            </a>
+          </div>
+        </nav>
+
+        <!-- Account -->
+        <div class="sidebar-footer">
+          <nav class="nav-section" aria-label="Account">
+            <div class="nav-section-title">{{ t('account') }}</div>
+            <div class="nav flex-column gap-1">
+              <!-- Profile -->
+              <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}"
+                 href="{{ url_for('profile') }}"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="right"
+                 title="Manage your profile">
+                <i class="bi bi-person"></i> {{ t('profile') }}
+              </a>
+
+              <!-- Settings -->
+              <a class="nav-link {% if request.endpoint == 'settings' %}active{% endif %}"
+                 href="{{ url_for('settings') }}"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="right"
+                 title="Application settings">
+                <i class="bi bi-gear"></i> {{ t('settings') }}
+              </a>
+            </div>
+          </nav>
+
+          <!-- Logout -->
+          <form action="{{ url_for('logout') }}" method="post" class="mt-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="logout-button" type="submit">
+              <i class="bi bi-box-arrow-left"></i> {{ t('logout') }}
+            </button>
+          </form>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Page Area -->
+    <div class="page-area">
+      <!-- Topbar -->
+      <header class="topbar">
+        <!-- Mobile menu toggle -->
+        <button class="btn btn-icon d-lg-none" 
+                data-bs-toggle="offcanvas" 
+                data-bs-target="#sidebar" 
+                aria-label="Open navigation">
+          <i class="bi bi-list"></i>
+        </button>
+        
+        <!-- Search Bar -->
+        <div class="search-bar d-none d-md-block">
+          <div class="position-relative">
+            <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+            <input type="search"
+                   class="search-input"
+                   placeholder="{{ t('search_placeholder') }}"
+                   aria-label="Search">
+          </div>
+        </div>
+        
+        <!-- Right Section -->
+        <div class="ms-auto d-flex align-items-center gap-3">
+          <!-- Notifications -->
+          <div class="dropdown">
+            <button class="btn-icon position-relative"
+                    id="notificationBell"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="Notifications">
+              <i class="bi bi-bell"></i>
+              {% if notifications %}
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                {{ notifications|length }}
+                <span class="visually-hidden">recent notifications</span>
+              </span>
+              {% endif %}
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow notification-menu p-0" aria-labelledby="notificationBell">
+              <div class="notification-header">
+                <span>{{ t('recent_activity') }}</span>
+                {% if notifications %}<span class="badge rounded-pill bg-light text-muted fw-normal">{{ notifications|length }}</span>{% endif %}
+              </div>
+              {% if notifications %}
+                {% for note in notifications %}
+                <a class="notification-item" href="{{ url_for('report', prediction_id=note.id) }}">
+                  <span class="notification-icon {{ note.tone }}"><i class="bi {{ note.icon }}"></i></span>
+                  <span class="notification-body">
+                    <span class="notification-message">{{ note.message }}</span>
+                    <span class="notification-time">{{ note.created_at }}</span>
+                  </span>
+                </a>
+                {% endfor %}
+                <a class="notification-footer" href="{{ url_for('history') }}">
+                  {{ t('view_all_history') }} <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+              {% else %}
+                <div class="notification-empty">
+                  <i class="bi bi-bell-slash"></i>
+                  <p>{{ t('no_recent_activity') }}</p>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Language Switcher -->
+          <div class="dropdown">
+            <button class="btn-icon d-flex align-items-center gap-1 px-2"
+                    id="languageSwitcher"
+                    type="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                    aria-label="{{ t('language') }}"
+                    style="width: auto;"
+                    title="{{ t('language') }}">
+              <i class="bi bi-translate"></i>
+              <span class="small fw-semibold d-none d-sm-inline">{{ supported_languages[current_language] }}</span>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+              {% for code, label in supported_languages.items() %}
+              <li>
+                <a class="dropdown-item d-flex align-items-center justify-content-between {% if code == current_language %}active{% endif %}"
+                   href="{{ url_for('set_language', lang_code=code) }}">
+                  {{ label }}
+                  {% if code == current_language %}<i class="bi bi-check-lg"></i>{% endif %}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+
+          <!-- Theme Toggle -->
+          <button class="btn-icon"
+                  id="themeToggle"
+                  type="button"
+                  aria-label="Toggle dark mode"
+                  data-bs-toggle="tooltip"
+                  data-bs-placement="bottom"
+                  title="Toggle dark mode">
+            <i class="bi bi-moon-stars"></i>
+          </button>
+
+          <!-- User Profile -->
+          <div class="profile-summary dropdown" id="userDropdown">
+            <div class="profile-avatar" 
+                 data-bs-toggle="dropdown" 
+                 aria-expanded="false"
+                 role="button">
+              {{ session.get('full_name', 'U')[0]|upper }}
+            </div>
+            <div class="d-none d-sm-block" data-bs-toggle="dropdown" role="button">
+              <strong class="d-block small">{{ session.get('full_name', 'User') }}</strong>
+              <small class="text-muted">{{ session.get('username', '') }}</small>
+            </div>
+            
+            <!-- User Dropdown Menu -->
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+              <li><h6 class="dropdown-header">Welcome, {{ session.get('full_name', 'User') }}</h6></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+              <li><a class="dropdown-item" href="{{ url_for('chatbot') }}"><i class="bi bi-question-circle me-2"></i>Help</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li>
+                <form action="{{ url_for('logout') }}" method="post">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="dropdown-item text-danger" type="submit">
+                    <i class="bi bi-box-arrow-left me-2"></i>Logout
+                  </button>
+                </form>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+      
+      <!-- Main Content -->
+      <main class="content-area page-transition">
+        <!-- Breadcrumb -->
+        {% block breadcrumb %}{% endblock %}
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm d-flex align-items-center" role="alert">
+                {% if category == 'success' %}
+                  <i class="bi bi-check-circle-fill me-2"></i>
+                {% elif category == 'danger' or category == 'error' %}
+                  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {% elif category == 'warning' %}
+                  <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {% elif category == 'info' %}
+                  <i class="bi bi-info-circle-fill me-2"></i>
+                {% endif %}
+                <div>{{ message }}</div>
+                <button class="btn-close ms-auto" type="button" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+      </main>
+      
+      <!-- Footer -->
+      <footer class="px-4 py-3 text-center text-muted small border-top">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <span>&copy; 2026 SoilSense. {{ t('all_rights_reserved') }}</span>
+          <span>
+            <a href="{{ url_for('privacy') }}" target="_blank" class="text-decoration-none text-muted me-3">{{ t('privacy') }}</a>
+            <a href="{{ url_for('terms') }}" target="_blank" class="text-decoration-none text-muted me-3">{{ t('terms') }}</a>
+            <a href="{{ url_for('chatbot') }}" class="text-decoration-none text-muted">{{ t('support') }}</a>
+          </span>
+        </div>
+      </footer>
+    </div>
+  </div>
+  
+  <!-- Toast Container -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+  
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" aria-hidden="true" style="display: none;">
+    <div class="text-center text-white">
+      <div class="spinner-border mb-3" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+      <p class="mb-0">Processing your request...</p>
+    </div>
+  </div>
+  
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Enhanced JavaScript functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      // Theme Toggle with persistence
+      const themeToggle = document.getElementById('themeToggle');
+      const html = document.documentElement;
+      const icon = themeToggle.querySelector('i');
+      
+      // Check saved theme
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      html.setAttribute('data-bs-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+      
+      themeToggle.addEventListener('click', () => {
+        const currentTheme = html.getAttribute('data-bs-theme');
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        html.setAttribute('data-bs-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeIcon(newTheme);
+        
+        showToast(`Switched to ${newTheme} mode`, 'info');
+      });
+      
+      function updateThemeIcon(theme) {
+        if (theme === 'dark') {
+          icon.className = 'bi bi-sun-fill';
+          themeToggle.setAttribute('aria-label', 'Toggle light mode');
+        } else {
+          icon.className = 'bi bi-moon-stars';
+          themeToggle.setAttribute('aria-label', 'Toggle dark mode');
+        }
+      }
+      
+      // Search Functionality
+      const searchInput = document.querySelector('.search-input');
+      if (searchInput) {
+        searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && searchInput.value.trim()) {
+            window.location.href = '{{ url_for("history") }}?search=' + encodeURIComponent(searchInput.value.trim());
+          }
+        });
+      }
+      
+      // Toast helper function
+      function showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toastContainer');
+        const toastId = 'toast-' + Date.now();
+        
+        const bgClass = {
+          'success': 'bg-success text-white',
+          'danger': 'bg-danger text-white',
+          'warning': 'bg-warning',
+          'info': 'bg-info text-white',
+          'error': 'bg-danger text-white'
+        }[type] || 'bg-info text-white';
+        
+        const iconClass = {
+          'success': 'bi-check-circle',
+          'danger': 'bi-x-circle',
+          'warning': 'bi-exclamation-triangle',
+          'info': 'bi-info-circle',
+          'error': 'bi-exclamation-circle'
+        }[type] || 'bi-info-circle';
+        
+        const toastHTML = `
+          <div id="${toastId}" class="toast align-items-center ${bgClass} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+              <div class="toast-body">
+                <i class="bi ${iconClass} me-2"></i>${message}
+              </div>
+              <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+          </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', () => {
+          toastElement.remove();
+        });
+      }
+      
+      // Initialize all tooltips
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+          delay: { show: 500, hide: 100 }
+        });
+      });
+      
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault();
+          if (searchInput) searchInput.focus();
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+          e.preventDefault();
+          themeToggle.click();
+        }
+      });
+      
+      // Auto-hide alerts after 5 seconds
+      document.querySelectorAll('.alert-dismissible').forEach(alert => {
+        setTimeout(() => {
+          const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+          if (bsAlert) bsAlert.close();
+        }, 5000);
+      });
+
+      // Close sidebar on outside click (mobile)
+      document.addEventListener('click', function(e) {
+        const sidebar = document.getElementById('sidebar');
+        if (window.innerWidth < 992 && sidebar.classList.contains('show')) {
+          if (!sidebar.contains(e.target) && !e.target.closest('.btn-icon')) {
+            bootstrap.Offcanvas.getOrCreateInstance(sidebar).hide();
+          }
+        }
+      });
+    });
+  </script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

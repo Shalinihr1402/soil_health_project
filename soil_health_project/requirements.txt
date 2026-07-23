@@ -1,0 +1,8 @@
+flask
+joblib
+numpy
+requests
+scikit-learn
+pandas
+python-dotenv
+flask-wtf

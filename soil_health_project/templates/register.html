@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Create your AI Soil Health System account - Get personalized crop recommendations and soil analysis">
+  <title>Register | AI Soil Health System</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand-dark: #0f2818;
+      --brand: #1b4332;
+      --brand-light: #40916c;
+      --accent: #d9a441;
+      --cream: #faf7f2;
+    }
+
+    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+    body { background: var(--cream); min-height: 100vh; }
+
+    .auth-shell { min-height: 100vh; display: flex; }
+
+    /* Left brand panel (shared look with login) */
+    .brand-panel {
+      flex: 1 1 42%;
+      background: radial-gradient(circle at 20% 20%, var(--brand-light) 0%, transparent 45%),
+                  linear-gradient(160deg, var(--brand-dark) 0%, var(--brand) 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 3rem;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .brand-panel::before, .brand-panel::after {
+      content: '';
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .brand-panel::before { width: 420px; height: 420px; top: -140px; right: -140px; }
+    .brand-panel::after { width: 280px; height: 280px; bottom: -100px; left: -80px; background: rgba(217, 164, 65, 0.12); }
+
+    .brand-mark {
+      display: flex; align-items: center; gap: 0.65rem;
+      font-weight: 800; font-size: 1.4rem; position: relative; z-index: 1;
+    }
+
+    .brand-mark i {
+      width: 42px; height: 42px; display: grid; place-items: center;
+      background: rgba(255, 255, 255, 0.12); border-radius: 12px;
+      font-size: 1.4rem; color: var(--accent);
+    }
+
+    .brand-copy { position: relative; z-index: 1; max-width: 400px; }
+    .brand-copy .eyebrow { text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.72rem; font-weight: 700; color: var(--accent); margin-bottom: 0.75rem; }
+    .brand-copy h1 { font-size: 2rem; font-weight: 800; line-height: 1.25; margin-bottom: 1rem; }
+    .brand-copy p { color: rgba(255, 255, 255, 0.75); font-size: 0.95rem; line-height: 1.6; }
+
+    .brand-features { position: relative; z-index: 1; list-style: none; padding: 0; margin: 1.5rem 0 0; display: flex; flex-direction: column; gap: 1rem; }
+    .brand-features li { display: flex; align-items: flex-start; gap: 0.75rem; }
+    .brand-features li i { color: var(--accent); font-size: 1.15rem; margin-top: 0.1rem; }
+    .brand-features li strong { display: block; font-size: 0.9rem; }
+    .brand-features li small { color: rgba(255, 255, 255, 0.6); font-size: 0.8rem; }
+
+    .brand-quote {
+      position: relative; z-index: 1;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.75rem;
+      font-size: 0.85rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .brand-quote .stars { color: var(--accent); font-size: 0.8rem; margin-bottom: 0.4rem; }
+
+    /* Right form panel */
+    .form-panel { flex: 1 1 58%; display: flex; align-items: center; justify-content: center; padding: 2.5rem 2rem; }
+    .form-wrap { width: 100%; max-width: 460px; }
+    .form-wrap h2 { font-weight: 800; font-size: 1.6rem; color: var(--brand-dark); margin-bottom: 0.25rem; }
+    .form-wrap .sub { color: #7a8a80; font-size: 0.88rem; margin-bottom: 1.5rem; }
+
+    /* Progress steps */
+    .progress-steps { display: flex; justify-content: space-between; margin-bottom: 1.75rem; position: relative; }
+    .progress-steps::before { content: ''; position: absolute; top: 15px; left: 0; right: 0; height: 2px; background: #ece7dc; z-index: 0; }
+    .step { position: relative; z-index: 1; text-align: center; flex: 1; }
+    .step-circle {
+      width: 32px; height: 32px; border-radius: 50%; background: #fff;
+      border: 2px solid #e7e2d8; display: inline-flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; color: #a7ab9e; transition: all 0.25s ease;
+    }
+    .step.active .step-circle { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .step.completed .step-circle { background: var(--brand-light); border-color: var(--brand-light); color: #fff; }
+    .step-label { font-size: 0.7rem; margin-top: 0.4rem; color: #a7ab9e; font-weight: 600; }
+    .step.active .step-label, .step.completed .step-label { color: var(--brand); }
+
+    .form-section { display: none; }
+    .form-section.active { display: block; animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
+
+    .form-label { font-size: 0.82rem; font-weight: 600; color: #33403a; }
+    .form-control { border-radius: 10px; border: 1.5px solid #e7e2d8; padding: 0.65rem 0.9rem; font-size: 0.95rem; background: #fff; }
+    .form-control:focus { border-color: var(--brand-light); box-shadow: 0 0 0 0.2rem rgba(64, 145, 108, 0.15); }
+
+    .password-strength { height: 4px; border-radius: 2px; margin-top: 0.5rem; background: #ece7dc; overflow: hidden; }
+    .strength-bar { height: 100%; width: 0; transition: width 0.3s ease, background 0.3s ease; }
+    .strength-text { font-size: 0.75rem; margin-top: 0.25rem; }
+
+    .btn-primary-custom {
+      background: var(--brand); border: none; color: #fff; padding: 0.7rem 1.5rem;
+      border-radius: 10px; font-weight: 700; transition: all 0.2s ease;
+    }
+    .btn-primary-custom:hover { background: var(--brand-dark); transform: translateY(-1px); box-shadow: 0 8px 20px rgba(27, 67, 50, 0.25); color: #fff; }
+
+    .btn-outline-custom {
+      border: 1.5px solid #e7e2d8; color: #556; background: transparent;
+      padding: 0.7rem 1.5rem; border-radius: 10px; font-weight: 600;
+    }
+    .btn-outline-custom:hover { background: #f4f1ea; }
+
+    a.link-accent { color: var(--brand); font-weight: 700; text-decoration: none; }
+    a.link-accent:hover { color: var(--brand-dark); }
+
+    .form-check-input:checked { background-color: var(--brand); border-color: var(--brand); }
+
+    @media (max-width: 991.98px) {
+      .auth-shell { flex-direction: column; }
+      .brand-panel { min-height: auto; padding: 2rem 1.5rem; }
+      .brand-copy h1 { font-size: 1.5rem; }
+      .brand-features, .brand-quote { display: none; }
+      .form-panel { padding: 2rem 1.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+
+  <div class="auth-shell">
+    <!-- Left: Brand Panel -->
+    <aside class="brand-panel d-none d-lg-flex">
+      <div class="brand-mark"><i class="bi bi-flower1"></i> SoilSense</div>
+
+      <div class="brand-copy">
+        <p class="eyebrow">Join SoilSense</p>
+        <h1>Start making data-driven farming decisions today.</h1>
+        <p>Create a free account to save your soil analyses, track trends over time, and get personalized crop recommendations.</p>
+
+        <ul class="brand-features">
+          <li><i class="bi bi-graph-up-arrow"></i><div><strong>AI-Powered Analysis</strong><br><small>Instant soil health scores and crop recommendations</small></div></li>
+          <li><i class="bi bi-cloud-sun"></i><div><strong>Weather Integration</strong><br><small>Real-time weather data for accurate predictions</small></div></li>
+          <li><i class="bi bi-journal-check"></i><div><strong>Fertilizer Planning</strong><br><small>Customized, deficit-based fertilizer recommendations</small></div></li>
+        </ul>
+      </div>
+
+      <div class="brand-quote">
+        <div class="stars">★★★★★</div>
+        "This tool transformed our farm's productivity!" — Rajesh Kumar, Farmer
+      </div>
+    </aside>
+
+    <!-- Right: Form Panel -->
+    <main class="form-panel">
+      <div class="form-wrap">
+        <div class="d-lg-none text-center mb-4">
+          <div class="brand-mark justify-content-center" style="color: var(--brand-dark);">
+            <i class="bi bi-flower1" style="color: var(--brand);"></i> SoilSense
+          </div>
+        </div>
+
+        <h2>Create your account</h2>
+        <p class="sub">Join in 3 simple steps.</p>
+
+        <!-- Progress Steps -->
+        <div class="progress-steps" id="progressSteps">
+          <div class="step active" data-step="1"><div class="step-circle">1</div><div class="step-label">Account</div></div>
+          <div class="step" data-step="2"><div class="step-circle">2</div><div class="step-label">Security</div></div>
+          <div class="step" data-step="3"><div class="step-circle">3</div><div class="step-label">Review</div></div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show d-flex align-items-center" role="alert">
+                {% if category == 'success' %}<i class="bi bi-check-circle-fill me-2"></i>
+                {% elif category == 'danger' %}<i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {% elif category == 'warning' %}<i class="bi bi-exclamation-circle-fill me-2"></i>
+                {% else %}<i class="bi bi-info-circle-fill me-2"></i>{% endif %}
+                <div>{{ message }}</div>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="post" novalidate id="registerForm" autocomplete="on">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <!-- Step 1: Account Information -->
+          <div class="form-section active" data-section="1">
+            <div class="mb-3">
+              <label for="full_name" class="form-label">Full Name</label>
+              <input id="full_name" name="full_name" type="text" class="form-control" placeholder="John Doe"
+                     value="{{ request.form.get('full_name', '') }}" required autocomplete="name" minlength="2" maxlength="100">
+              <div class="invalid-feedback">Please enter your full name (2-100 characters)</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="email" class="form-label">Email Address</label>
+              <input id="email" name="email" type="email" class="form-control" placeholder="name@example.com"
+                     value="{{ request.form.get('email', '') }}" required autocomplete="email">
+              <div class="invalid-feedback">Please enter a valid email address</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="username" class="form-label">Username</label>
+              <input id="username" name="username" type="text" class="form-control" placeholder="johndoe"
+                     value="{{ request.form.get('username', '') }}" required autocomplete="username"
+                     minlength="3" maxlength="30" pattern="[A-Za-z0-9_]+">
+              <div class="form-text">3-30 characters: letters, numbers, and underscores only</div>
+              <div class="invalid-feedback">Username must be 3-30 characters (letters, numbers, underscores)</div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+              <button type="button" class="btn btn-primary-custom next-step">Next <i class="bi bi-arrow-right ms-2"></i></button>
+            </div>
+          </div>
+
+          <!-- Step 2: Security -->
+          <div class="form-section" data-section="2">
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input id="password" name="password" type="password" class="form-control" placeholder="At least 8 characters"
+                     minlength="8" required autocomplete="new-password">
+              <div class="password-strength"><div class="strength-bar" id="strengthBar"></div></div>
+              <div class="strength-text" id="strengthText"></div>
+              <div class="form-text">Minimum 8 characters with a mix of letters, numbers &amp; symbols</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="confirm_password" class="form-label">Confirm Password</label>
+              <input id="confirm_password" name="confirm_password" type="password" class="form-control" placeholder="Re-enter your password"
+                     minlength="8" required autocomplete="new-password">
+              <div class="invalid-feedback" id="confirmFeedback">Passwords do not match</div>
+              <div class="valid-feedback" id="confirmSuccess">Passwords match!</div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn btn-outline-custom prev-step"><i class="bi bi-arrow-left me-2"></i>Back</button>
+              <button type="button" class="btn btn-primary-custom next-step">Next <i class="bi bi-arrow-right ms-2"></i></button>
+            </div>
+          </div>
+
+          <!-- Step 3: Review & Submit -->
+          <div class="form-section" data-section="3">
+            <div class="bg-light p-3 rounded mb-3">
+              <div class="row mb-2"><div class="col-4 text-muted small">Name:</div><div class="col-8" id="reviewName">-</div></div>
+              <div class="row mb-2"><div class="col-4 text-muted small">Email:</div><div class="col-8" id="reviewEmail">-</div></div>
+              <div class="row mb-2"><div class="col-4 text-muted small">Username:</div><div class="col-8" id="reviewUsername">-</div></div>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="termsCheck" required>
+              <label class="form-check-label small" for="termsCheck">
+                I agree to the <a href="{{ url_for('terms') }}" target="_blank" class="link-accent">Terms of Service</a> and <a href="{{ url_for('privacy') }}" target="_blank" class="link-accent">Privacy Policy</a>
+              </label>
+              <div class="invalid-feedback">You must agree before submitting</div>
+            </div>
+
+            <div class="form-check mb-4">
+              <input class="form-check-input" type="checkbox" id="newsletterCheck">
+              <label class="form-check-label small" for="newsletterCheck">Send me farming tips and updates (optional)</label>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+              <button type="button" class="btn btn-outline-custom prev-step"><i class="bi bi-arrow-left me-2"></i>Back</button>
+              <button type="submit" class="btn btn-primary-custom" id="submitButton">
+                <span class="spinner-border spinner-border-sm d-none me-2" id="submitSpinner"></span>
+                <i class="bi bi-person-plus me-2"></i>Create Account
+              </button>
+            </div>
+          </div>
+        </form>
+
+        <p class="text-center small text-muted mt-4 mb-0">
+          Already have an account? <a href="{{ url_for('login') }}" class="link-accent">Log in here</a>
+        </p>
+      </div>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      let currentStep = 1;
+      const totalSteps = 3;
+      const form = document.getElementById('registerForm');
+
+      function showStep(stepNumber) {
+        document.querySelectorAll('.form-section').forEach(section => section.classList.remove('active'));
+        document.querySelector(`[data-section="${stepNumber}"]`).classList.add('active');
+
+        document.querySelectorAll('.step').forEach(step => {
+          const stepNum = parseInt(step.dataset.step);
+          step.classList.remove('active', 'completed');
+          if (stepNum < stepNumber) step.classList.add('completed');
+          if (stepNum === stepNumber) step.classList.add('active');
+        });
+
+        currentStep = stepNumber;
+      }
+
+      document.querySelectorAll('.next-step').forEach(button => {
+        button.addEventListener('click', function() {
+          if (validateStep(currentStep)) {
+            if (currentStep === 2) updateReview();
+            showStep(Math.min(currentStep + 1, totalSteps));
+          }
+        });
+      });
+
+      document.querySelectorAll('.prev-step').forEach(button => {
+        button.addEventListener('click', function() { showStep(Math.max(currentStep - 1, 1)); });
+      });
+
+      function validateStep(step) {
+        let isValid = true;
+
+        if (step === 1) {
+          const name = document.getElementById('full_name');
+          if (!name.value.trim() || name.value.trim().length < 2 || name.value.trim().length > 100) {
+            name.classList.add('is-invalid'); isValid = false;
+          } else { name.classList.remove('is-invalid'); name.classList.add('is-valid'); }
+
+          const email = document.getElementById('email');
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!email.value.trim() || !emailRegex.test(email.value.trim())) {
+            email.classList.add('is-invalid'); isValid = false;
+          } else { email.classList.remove('is-invalid'); email.classList.add('is-valid'); }
+
+          const username = document.getElementById('username');
+          const usernameRegex = /^[A-Za-z0-9_]{3,30}$/;
+          if (!username.value.trim() || !usernameRegex.test(username.value.trim())) {
+            username.classList.add('is-invalid'); isValid = false;
+          } else { username.classList.remove('is-invalid'); username.classList.add('is-valid'); }
+        } else if (step === 2) {
+          const password = document.getElementById('password');
+          if (!password.value || password.value.length < 8) {
+            password.classList.add('is-invalid'); isValid = false;
+          } else { password.classList.remove('is-invalid'); password.classList.add('is-valid'); }
+
+          const confirmPassword = document.getElementById('confirm_password');
+          if (confirmPassword.value !== password.value) {
+            confirmPassword.classList.add('is-invalid');
+            confirmPassword.classList.remove('is-valid');
+            document.getElementById('confirmFeedback').style.display = 'block';
+            document.getElementById('confirmSuccess').style.display = 'none';
+            isValid = false;
+          } else if (confirmPassword.value) {
+            confirmPassword.classList.remove('is-invalid');
+            confirmPassword.classList.add('is-valid');
+            document.getElementById('confirmFeedback').style.display = 'none';
+            document.getElementById('confirmSuccess').style.display = 'block';
+          }
+        }
+
+        if (!isValid) showToast('Please fix the errors before continuing', 'warning');
+        return isValid;
+      }
+
+      function updateReview() {
+        document.getElementById('reviewName').textContent = document.getElementById('full_name').value;
+        document.getElementById('reviewEmail').textContent = document.getElementById('email').value;
+        document.getElementById('reviewUsername').textContent = document.getElementById('username').value;
+      }
+
+      const password = document.getElementById('password');
+      const strengthBar = document.getElementById('strengthBar');
+      const strengthText = document.getElementById('strengthText');
+
+      password.addEventListener('input', function() {
+        const val = this.value;
+        let strength = 0;
+        if (val.length >= 8) strength += 25;
+        if (val.match(/[a-z]+/)) strength += 25;
+        if (val.match(/[A-Z]+/)) strength += 25;
+        if (val.match(/[0-9]+/)) strength += 15;
+        if (val.match(/[!@#$%^&*(),.?":{}|<>]+/)) strength += 10;
+
+        strengthBar.style.width = strength + '%';
+
+        if (strength < 50) {
+          strengthBar.style.background = '#dc3545'; strengthText.textContent = 'Weak password'; strengthText.style.color = '#dc3545';
+        } else if (strength < 75) {
+          strengthBar.style.background = '#d9a441'; strengthText.textContent = 'Medium password'; strengthText.style.color = '#d9a441';
+        } else {
+          strengthBar.style.background = '#40916c'; strengthText.textContent = 'Strong password'; strengthText.style.color = '#40916c';
+        }
+
+        const confirmPassword = document.getElementById('confirm_password');
+        if (confirmPassword.value) {
+          if (confirmPassword.value !== val) { confirmPassword.classList.add('is-invalid'); confirmPassword.classList.remove('is-valid'); }
+          else { confirmPassword.classList.remove('is-invalid'); confirmPassword.classList.add('is-valid'); }
+        }
+      });
+
+      document.getElementById('confirm_password').addEventListener('input', function() {
+        const passwordVal = document.getElementById('password').value;
+        if (this.value === passwordVal && this.value) {
+          this.classList.remove('is-invalid'); this.classList.add('is-valid');
+          document.getElementById('confirmFeedback').style.display = 'none';
+          document.getElementById('confirmSuccess').style.display = 'block';
+        } else if (this.value) {
+          this.classList.add('is-invalid'); this.classList.remove('is-valid');
+          document.getElementById('confirmFeedback').style.display = 'block';
+          document.getElementById('confirmSuccess').style.display = 'none';
+        } else {
+          this.classList.remove('is-invalid', 'is-valid');
+          document.getElementById('confirmFeedback').style.display = 'none';
+          document.getElementById('confirmSuccess').style.display = 'none';
+        }
+      });
+
+      form.addEventListener('submit', function(event) {
+        const termsCheck = document.getElementById('termsCheck');
+        if (!termsCheck.checked) {
+          event.preventDefault();
+          termsCheck.classList.add('is-invalid');
+          showToast('Please agree to the Terms of Service', 'warning');
+          return;
+        }
+
+        const submitButton = document.getElementById('submitButton');
+        const spinner = document.getElementById('submitSpinner');
+        submitButton.disabled = true;
+        spinner.classList.remove('d-none');
+      });
+
+      function showToast(message, type = 'info') {
+        const toastContainer = document.querySelector('.toast-container');
+        const toastId = 'toast-' + Date.now();
+        const bgClass = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[type] || 'bg-info';
+        const iconClass = { success: 'bi-check-circle', danger: 'bi-x-circle', warning: 'bi-exclamation-triangle', info: 'bi-info-circle' }[type] || 'bi-info-circle';
+
+        const toastHTML = `
+          <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0" role="alert">
+            <div class="d-flex">
+              <div class="toast-body"><i class="bi ${iconClass} me-2"></i>${message}</div>
+              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+          </div>`;
+
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        const toastElement = document.getElementById(toastId);
+        new bootstrap.Toast(toastElement, { delay: 3000 }).show();
+        toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+      }
+    });
+  </script>
+</body>
+</html>

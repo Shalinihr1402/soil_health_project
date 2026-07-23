@@ -1,0 +1,336 @@
+{% extends "base.html" %}
+{% block title %}Prediction History | SoilSense{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <p class="eyebrow mb-1">{{ t('prediction_history_eyebrow') }}</p>
+    <h1>{{ t('your_analysis_history') }}</h1>
+    <p class="text-body-secondary mb-0">{{ t('history_desc') }}</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{{ url_for('home') }}">
+      <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">
+      <i class="bi bi-grid-1x2 me-1"></i> {{ t('dashboard') }}
+    </a>
+  </div>
+</section>
+
+<!-- Stats Overview -->
+<section class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon primary"><i class="bi bi-bar-chart"></i></span>
+      <div>
+        <p>{{ t('total_analyses') }}</p>
+        <h2>{{ stats.total }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon success"><i class="bi bi-heart-pulse"></i></span>
+      <div>
+        <p>{{ t('average_score') }}</p>
+        <h2>{{ stats.average_score }}%</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon warning"><i class="bi bi-trophy"></i></span>
+      <div>
+        <p>{{ t('best_score') }}</p>
+        <h2>{{ stats.best_score }}%</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon info"><i class="bi bi-calendar-check"></i></span>
+      <div>
+        <p>{{ t('today') }}</p>
+        <h2>{{ stats.today_count }}</h2>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Filter and Search -->
+<section class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="row g-3 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label small text-muted">{{ t('search') }}</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" id="searchInput" class="form-control" placeholder="{{ t('search_by_crop_placeholder') }}" onkeyup="filterPredictions()">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted">{{ t('filter_by_score') }}</label>
+        <select id="scoreFilter" class="form-select" onchange="filterPredictions()">
+          <option value="all">{{ t('all_scores') }}</option>
+          <option value="excellent">{{ t('excellent') }} (80-100)</option>
+          <option value="good">{{ t('good') }} (60-79)</option>
+          <option value="average">{{ t('average') }} (40-59)</option>
+          <option value="poor">{{ t('poor') }} (0-39)</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small text-muted">{{ t('sort_by') }}</label>
+        <select id="sortBy" class="form-select" onchange="filterPredictions()">
+          <option value="date-desc">{{ t('newest_first') }}</option>
+          <option value="date-asc">{{ t('oldest_first') }}</option>
+          <option value="score-desc">{{ t('highest_score') }}</option>
+          <option value="score-asc">{{ t('lowest_score') }}</option>
+          <option value="crop-asc">{{ t('crop_name_az') }}</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" onclick="resetFilters()">
+          <i class="bi bi-arrow-clockwise me-1"></i> {{ t('reset') }}
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Predictions List -->
+<section class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+    <h2 class="h5 mb-0">
+      <i class="bi bi-list-ul me-2"></i>{{ t('predictions') }}
+      <span class="badge bg-primary ms-2">{{ predictions|length }}</span>
+    </h2>
+  </div>
+  
+  <div class="card-body p-0">
+    {% if predictions %}
+      <!-- Table View (Desktop) -->
+      <div class="table-responsive d-none d-md-block">
+        <table class="table table-hover mb-0" id="predictionsTable">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 50px;">#</th>
+              <th>{{ t('crop') }}</th>
+              <th>{{ t('score') }}</th>
+              <th>{{ t('status') }}</th>
+              <th>{{ t('fertilizer') }}</th>
+              <th>{{ t('date') }}</th>
+              <th style="width: 100px;">{{ t('action') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pred in predictions %}
+            <tr class="prediction-row" 
+                data-score="{{ pred.soil_score }}"
+                data-crop="{{ pred.crop|lower }}"
+                data-date="{{ pred.created_at }}"
+                data-status="{{ pred.status|lower }}">
+              <td class="text-muted small">{{ pred.id }}</td>
+              <td>
+                <a href="{{ url_for('report', prediction_id=pred.id) }}" class="text-decoration-none fw-semibold">
+                  {{ tc(pred.crop) }}
+                </a>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="progress flex-grow-1" style="height: 6px; max-width: 80px;">
+                    <div class="progress-bar {% if pred.soil_score >= 80 %}bg-success{% elif pred.soil_score >= 60 %}bg-info{% elif pred.soil_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                         style="width: {{ pred.soil_score }}%"></div>
+                  </div>
+                  <span class="small fw-semibold">{{ pred.soil_score }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="badge {% if pred.status == 'Excellent' %}bg-success{% elif pred.status == 'Good' %}bg-info{% elif pred.status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                  {{ t(pred.status|lower|replace(' ', '_')) }}
+                </span>
+              </td>
+              <td class="small text-muted">{{ tf(pred.fertilizer) }}</td>
+              <td class="small text-muted">
+                {% if pred.created_at %}
+                  {{ pred.created_at[:10] }}
+                  <br>
+                  <span class="text-muted">{{ pred.created_at[11:16] if pred.created_at|length > 11 else '' }}</span>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                <a href="{{ url_for('report', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-primary" title="{{ t('view_report') }}">
+                  <i class="bi bi-eye"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Card View (Mobile) -->
+      <div class="d-md-none p-3">
+        {% for pred in predictions %}
+        <div class="card mb-3 prediction-card" 
+             data-score="{{ pred.soil_score }}"
+             data-crop="{{ pred.crop|lower }}"
+             data-date="{{ pred.created_at }}"
+             data-status="{{ pred.status|lower }}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              <div>
+                <h3 class="h6 mb-0">{{ tc(pred.crop) }}</h3>
+                <small class="text-muted">ID: #{{ pred.id }}</small>
+              </div>
+              <span class="badge {% if pred.status == 'Excellent' %}bg-success{% elif pred.status == 'Good' %}bg-info{% elif pred.status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                {{ pred.status }}
+              </span>
+            </div>
+            
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div class="progress flex-grow-1" style="height: 8px;">
+                <div class="progress-bar {% if pred.soil_score >= 80 %}bg-success{% elif pred.soil_score >= 60 %}bg-info{% elif pred.soil_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                     style="width: {{ pred.soil_score }}%"></div>
+              </div>
+              <strong>{{ pred.soil_score }}%</strong>
+            </div>
+            
+            <div class="row small text-muted mb-2">
+              <div class="col-6">
+                <i class="bi bi-droplet me-1"></i>{{ tf(pred.fertilizer) }}
+              </div>
+              <div class="col-6 text-end">
+                <i class="bi bi-calendar me-1"></i>{{ pred.created_at[:10] if pred.created_at else 'N/A' }}
+              </div>
+            </div>
+            
+            <a href="{{ url_for('report', prediction_id=pred.id) }}" class="btn btn-sm btn-primary w-100">
+              <i class="bi bi-eye me-1"></i> {{ t('view_full_report') }}
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="text-center py-5">
+        <i class="bi bi-inbox" style="font-size: 4rem; color: #ccc;"></i>
+        <h3 class="h5 mt-3">{{ t('no_predictions_yet') }}</h3>
+        <p class="text-muted">{{ t('start_first_prediction') }}</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">
+          <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+  
+  {% if predictions %}
+  <div class="card-footer bg-transparent">
+    <small class="text-muted">
+      Showing {{ predictions|length }} prediction(s)
+      {% if predictions|length > 0 %}
+        • Latest: {{ predictions[0].created_at[:10] if predictions[0].created_at else 'N/A' }}
+      {% endif %}
+    </small>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Export Section -->
+{% if predictions %}
+<section class="text-center mt-4">
+  <button class="btn btn-outline-secondary" onclick="exportToCSV()">
+    <i class="bi bi-download me-1"></i> Export to CSV
+  </button>
+  <button class="btn btn-outline-secondary ms-2" onclick="window.print()">
+    <i class="bi bi-printer me-1"></i> Print
+  </button>
+</section>
+{% endif %}
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const searchParam = new URLSearchParams(window.location.search).get('search');
+    if (searchParam) {
+      document.getElementById('searchInput').value = searchParam;
+      filterPredictions();
+    }
+  });
+
+  function filterPredictions() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const scoreFilter = document.getElementById('scoreFilter').value;
+    const sortBy = document.getElementById('sortBy').value;
+    
+    // Get all prediction rows/cards
+    const rows = document.querySelectorAll('.prediction-row');
+    const cards = document.querySelectorAll('.prediction-card');
+    const items = [...rows, ...cards];
+    
+    // Filter
+    items.forEach(item => {
+      let show = true;
+      
+      // Search filter
+      if (searchTerm && !item.dataset.crop.includes(searchTerm)) {
+        show = false;
+      }
+      
+      // Score filter
+      if (scoreFilter !== 'all') {
+        const score = parseInt(item.dataset.score);
+        const status = item.dataset.status;
+        
+        if (scoreFilter === 'excellent' && score < 80) show = false;
+        if (scoreFilter === 'good' && (score < 60 || score >= 80)) show = false;
+        if (scoreFilter === 'average' && (score < 40 || score >= 60)) show = false;
+        if (scoreFilter === 'poor' && score >= 40) show = false;
+      }
+      
+      item.style.display = show ? '' : 'none';
+    });
+    
+    // Update visible count
+    const visibleCount = Array.from(items).filter(item => item.style.display !== 'none').length;
+    const totalCount = items.length;
+    
+    // Could add a counter display here
+  }
+  
+  function resetFilters() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('scoreFilter').value = 'all';
+    document.getElementById('sortBy').value = 'date-desc';
+    filterPredictions();
+  }
+  
+  function exportToCSV() {
+    const rows = [
+      ['ID', 'Crop', 'Score', 'Status', 'Fertilizer', 'Date']
+    ];
+    
+    {% for pred in predictions %}
+    rows.push([
+      '{{ pred.id }}',
+      '{{ pred.crop }}',
+      '{{ pred.soil_score }}',
+      '{{ t(pred.status|lower|replace(' ', '_')) }}',
+      '{{ tf(pred.fertilizer) }}',
+      '{{ pred.created_at[:10] if pred.created_at else '' }}'
+    ]);
+    {% endfor %}
+    
+    const csvContent = rows.map(row => row.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'soil_predictions_{{ session.get("username", "user") }}_{{ today_date }}.csv';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }
+</script>
+{% endblock %}

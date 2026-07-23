@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Farm Assistant | SoilSense{% endblock %}
+{% block content %}
+<section class="page-heading mb-4"><p class="eyebrow mb-1">{{ t('farm_assistant').upper() }}</p><h1>{{ t('ask_farm_assistant') }}</h1><p class="text-body-secondary mb-0">{{ t('ask_farm_assistant_desc') }}</p></section>
+<section class="chat-panel" data-chat-url="{{ url_for('chatbot') }}"><div class="chat-messages" id="chatMessages">{% if chat_history %}{% for item in chat_history %}<div class="chat-bubble {{ item.role }}">{{ item.message }}</div>{% endfor %}{% else %}<div class="chat-bubble assistant">{{ t('chat_greeting') }}</div>{% endif %}</div><form class="chat-form" id="chatForm" data-no-loading="true"><button class="btn btn-outline-secondary" id="voiceInput" type="button"><i class="bi bi-mic"></i></button><input class="form-control" id="chatMessage" maxlength="500" placeholder="{{ t('chat_placeholder') }}" required><button class="btn btn-primary" type="submit"><i class="bi bi-send"></i> {{ t('send') }}</button></form><small class="text-body-secondary mt-2 d-block">{{ t('voice_input_note') }}</small></section>
+{% endblock %}

@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<section class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <p class="eyebrow mb-1">{{ t('analytics') }}</p>
+    <h1>{{ t('insights_trends') }}</h1>
+    <p class="text-body-secondary mb-0">{{ t('analytics_desc') }}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('home') }}">
+    <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+  </a>
+</section>
+
+{% if data.total_predictions == 0 %}
+<div class="panel-card text-center py-5">
+  <i class="bi bi-graph-up-arrow" style="font-size: 4rem; color: #ccc;"></i>
+  <h3 class="h5 mt-3">{{ t('no_data_yet') }}</h3>
+  <p class="text-muted">{{ t('no_data_desc') }}</p>
+  <a href="{{ url_for('home') }}" class="btn btn-primary">
+    <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+  </a>
+</div>
+{% else %}
+
+<section class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon primary"><i class="bi bi-bar-chart"></i></span>
+      <div>
+        <p>{{ t('total_analyses') }}</p>
+        <h2>{{ data.total_predictions }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon success"><i class="bi bi-flower1"></i></span>
+      <div>
+        <p>{{ t('unique_crops') }}</p>
+        <h2>{{ data.crop_stats|length }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon warning"><i class="bi bi-trophy"></i></span>
+      <div>
+        <p>{{ t('top_crop') }}</p>
+        <h2 style="font-size:1.15rem">{{ tc(data.crop_stats[0].crop) if data.crop_stats else 'N/A' }}</h2>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="metric-card">
+      <span class="metric-icon info"><i class="bi bi-calendar-range"></i></span>
+      <div>
+        <p>{{ t('months_tracked') }}</p>
+        <h2>{{ data.monthly_stats|length }}</h2>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="row g-3 mb-4">
+  <div class="col-lg-6">
+    <div class="panel-card h-100">
+      <div class="panel-header">
+        <h2>{{ t('crop_distribution') }}</h2>
+        <p>{{ t('crop_distribution_desc') }}</p>
+      </div>
+      <canvas id="cropDistributionChart" height="220"></canvas>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="panel-card h-100">
+      <div class="panel-header">
+        <h2>{{ t('monthly_trend') }}</h2>
+        <p>{{ t('monthly_trend_desc') }}</p>
+      </div>
+      <canvas id="monthlyTrendChart" height="220"></canvas>
+    </div>
+  </div>
+</section>
+
+<section class="panel-card">
+  <div class="panel-header">
+    <h2>{{ t('crop_breakdown') }}</h2>
+    <p>{{ t('crop_breakdown_desc') }}</p>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>{{ t('crop') }}</th>
+          <th>{{ t('predictions') }}</th>
+          <th>{{ t('avg_soil_score') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for crop in data.crop_stats %}
+        <tr>
+          <td class="fw-semibold">{{ tc(crop.crop) }}</td>
+          <td>{{ crop.count }}</td>
+          <td>{{ crop.avg_score }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+{% if data.total_predictions > 0 %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+  const cropLabels = {{ data.crop_stats|map(attribute='crop')|list|tojson }};
+  const cropCounts = {{ data.crop_stats|map(attribute='count')|list|tojson }};
+  const monthLabels = {{ data.monthly_stats|map(attribute='month')|list|tojson }};
+  const monthScores = {{ data.monthly_stats|map(attribute='avg_score')|list|tojson }};
+
+  new Chart(document.getElementById('cropDistributionChart'), {
+    type: 'bar',
+    data: {
+      labels: cropLabels,
+      datasets: [{
+        label: 'Predictions',
+        data: cropCounts,
+        backgroundColor: '#1b4332',
+        borderRadius: 6
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+    }
+  });
+
+  new Chart(document.getElementById('monthlyTrendChart'), {
+    type: 'line',
+    data: {
+      labels: monthLabels,
+      datasets: [{
+        label: 'Average Soil Score',
+        data: monthScores,
+        borderColor: '#40916c',
+        backgroundColor: 'rgba(27, 67, 50, 0.12)',
+        pointBackgroundColor: '#1b4332',
+        tension: 0.3,
+        fill: true
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, max: 100 } }
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

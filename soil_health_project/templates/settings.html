@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+<section class="page-heading mb-4">
+  <p class="eyebrow mb-1">ACCOUNT</p>
+  <h1>Settings</h1>
+  <p class="text-body-secondary mb-0">Update your profile details and password.</p>
+</section>
+
+<div class="row g-4">
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent">
+        <h2 class="h5 mb-0">Profile Information</h2>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('settings') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="update_profile">
+          <div class="mb-3">
+            <label class="form-label" for="full_name">Full Name</label>
+            <input type="text" class="form-control" id="full_name" name="full_name"
+                   value="{{ user.full_name if user else '' }}" required minlength="2" maxlength="100">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="email">Email</label>
+            <input type="email" class="form-control" id="email" name="email"
+                   value="{{ user.email if user else '' }}" required maxlength="254">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" class="form-control" value="{{ user.username if user else '' }}" disabled>
+            <small class="text-muted">Username cannot be changed.</small>
+          </div>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-lg me-1"></i> Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm">
+      <div class="card-header bg-transparent">
+        <h2 class="h5 mb-0">Change Password</h2>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('settings') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="action" value="change_password">
+          <div class="mb-3">
+            <label class="form-label" for="current_password">Current Password</label>
+            <input type="password" class="form-control" id="current_password" name="current_password" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="new_password">New Password</label>
+            <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="confirm_password">Confirm New Password</label>
+            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="8">
+          </div>
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="bi bi-shield-lock me-1"></i> Update Password
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

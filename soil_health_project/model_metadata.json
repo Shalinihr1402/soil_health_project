@@ -1,0 +1,58 @@
+{
+  "selected_model": "Random Forest",
+  "feature_names": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall"
+  ],
+  "model_comparison": {
+    "Random Forest": {
+      "accuracy": 0.9932,
+      "precision": 0.9935,
+      "recall": 0.9932,
+      "f1_score": 0.9932
+    },
+    "Decision Tree": {
+      "accuracy": 0.9795,
+      "precision": 0.9806,
+      "recall": 0.9795,
+      "f1_score": 0.9794
+    }
+  },
+  "feature_importance": [
+    {
+      "feature": "humidity",
+      "importance": 21.77
+    },
+    {
+      "feature": "rainfall",
+      "importance": 21.73
+    },
+    {
+      "feature": "K",
+      "importance": 17.63
+    },
+    {
+      "feature": "P",
+      "importance": 14.92
+    },
+    {
+      "feature": "N",
+      "importance": 10.67
+    },
+    {
+      "feature": "temperature",
+      "importance": 7.62
+    },
+    {
+      "feature": "ph",
+      "importance": 5.68
+    }
+  ],
+  "training_rows": 2200,
+  "test_rows": 440
+}

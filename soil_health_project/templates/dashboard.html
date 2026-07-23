@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+{% block title %}Dashboard | SoilSense{% endblock %}
+
+{% block extra_css %}
+<style>
+  :root {
+    --primary-gradient: linear-gradient(135deg, #1b4332 0%, #40916c 100%);
+    --success-gradient: linear-gradient(135deg, #0f2818 0%, #40916c 100%);
+    --warning-gradient: linear-gradient(135deg, #b8842f 0%, #d9a441 100%);
+    --info-gradient: linear-gradient(135deg, #1e4d5c 0%, #2f6690 100%);
+  }
+
+  /* Enhanced Metric Cards */
+  .metric-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    word-wrap: break-word;
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--bs-primary);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+  }
+
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .metric-card:hover::before {
+    transform: scaleX(1);
+  }
+
+  .metric-card.primary { border-left: 4px solid var(--bs-primary); }
+  .metric-card.success { border-left: 4px solid #28a745; }
+  .metric-card.warning { border-left: 4px solid #ffc107; }
+  .metric-card.info { border-left: 4px solid #17a2b8; }
+
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .metric-icon.primary { background: rgba(45, 90, 39, 0.1); color: var(--bs-primary); }
+  .metric-icon.success { background: rgba(40, 167, 69, 0.1); color: #28a745; }
+  .metric-icon.warning { background: rgba(255, 193, 7, 0.1); color: #ffc107; }
+  .metric-icon.info { background: rgba(23, 162, 184, 0.1); color: #17a2b8; }
+
+  .metric-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+  }
+
+  .metric-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .metric-trend {
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .metric-trend.up { color: #28a745; }
+  .metric-trend.down { color: #dc3545; }
+
+  /* Sparkline Chart */
+  .sparkline {
+    height: 40px;
+    margin-top: 0.5rem;
+  }
+
+  /* Quick Actions */
+  .quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .quick-action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-decoration: none;
+    color: inherit;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .quick-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .quick-action-card .action-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Weather Widget */
+  .weather-widget {
+    background: linear-gradient(135deg, #2f6690 0%, #1b4332 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .weather-widget::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 60%);
+    animation: weatherPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes weatherPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+  }
+
+  /* Activity Timeline */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--bs-primary), #e0e0e0);
+  }
+
+  .timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+  }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2.35rem;
+    top: 0.25rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--bs-primary);
+    border: 2px solid white;
+    box-shadow: 0 0 0 2px var(--bs-primary);
+  }
+
+  /* Progress Ring */
+  .progress-ring {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+  }
+
+  .progress-ring svg {
+    transform: rotate(-90deg);
+  }
+
+  .progress-ring-circle {
+    transition: stroke-dashoffset 0.5s ease;
+  }
+
+  .progress-ring-value {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .metric-card {
+      padding: 1rem;
+    }
+    
+    .metric-value {
+      font-size: 1.5rem;
+    }
+    
+    .weather-widget {
+      padding: 1rem;
+    }
+  }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-in {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  .delay-1 { animation-delay: 0.1s; }
+  .delay-2 { animation-delay: 0.2s; }
+  .delay-3 { animation-delay: 0.3s; }
+  .delay-4 { animation-delay: 0.4s; }
+
+  /* Tool Tips */
+  .info-tooltip {
+    cursor: help;
+    border-bottom: 1px dashed #6c757d;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4 animate-in">
+  <div>
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="badge bg-success-subtle text-success">{{ t('active_status') }}</span>
+      <p class="eyebrow mb-0">{{ t('soil_health_analytics_eyebrow') }}</p>
+    </div>
+    <h1>{{ t('welcome_back') }}, {{ session.get('full_name', 'User').split(' ')[0] }}! 👋</h1>
+    <p class="text-body-secondary mb-0">
+      <i class="bi bi-calendar-check me-1"></i>
+      {{ t('todays_date') }}
+    </p>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-outline-secondary" onclick="window.location.reload()" title="{{ t('refresh_dashboard') }}">
+      <i class="bi bi-arrow-clockwise"></i>
+    </button>
+    <a class="btn btn-primary" href="{{ url_for('home') }}">
+      <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+    </a>
+  </div>
+</section>
+
+<!-- Metric Cards Row -->
+<section class="row g-3 mb-4">
+  <!-- Total Predictions -->
+  <div class="col-sm-6 col-xxl-3 animate-in delay-1">
+    <article class="metric-card primary h-100">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <span class="metric-icon primary">
+          <i class="bi bi-layers"></i>
+        </span>
+        <span class="metric-trend up">
+          <i class="bi bi-arrow-up-short"></i> 12%
+        </span>
+      </div>
+      <p class="metric-label">{{ t('total_predictions_label') }}</p>
+      <h2 class="metric-value">{{ metrics.total_predictions }}</h2>
+      <small class="text-muted">{{ t('all_saved_analyses') }}</small>
+      <div class="sparkline" id="predictionsSparkline"></div>
+    </article>
+  </div>
+
+  <!-- Soil Health Score -->
+  <div class="col-sm-6 col-xxl-3 animate-in delay-2">
+    <article class="metric-card success h-100">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <span class="metric-icon success">
+          <i class="bi bi-heart-pulse"></i>
+        </span>
+        <span class="badge bg-success-subtle text-success">
+          {% if metrics.average_soil_score >= 80 %}{{ t('excellent') }}
+          {% elif metrics.average_soil_score >= 60 %}{{ t('good') }}
+          {% elif metrics.average_soil_score >= 40 %}{{ t('average') }}
+          {% else %}{{ t('needs_work') }}{% endif %}
+        </span>
+      </div>
+      <p class="metric-label">{{ t('soil_health_score_label') }}</p>
+      <h2 class="metric-value">{{ metrics.average_soil_score }}<small class="fs-6">%</small></h2>
+      <small class="text-muted">{{ t('average_across_tests') }}</small>
+    </article>
+  </div>
+
+  <!-- Recommended Crop -->
+  <div class="col-sm-6 col-xxl-3 animate-in delay-3">
+    <article class="metric-card warning h-100">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <span class="metric-icon warning">
+          <i class="bi bi-tree"></i>
+        </span>
+        <span class="badge bg-warning-subtle text-warning">
+          <i class="bi bi-star-fill small"></i> {{ t('top_pick') }}
+        </span>
+      </div>
+      <p class="metric-label">{{ t('recommended_crop_label') }}</p>
+      <h2 class="metric-value crop-name">{{ tc(metrics.recommended_crop) if metrics.recommended_crop != 'No data yet' else t('no_data_short') }}</h2>
+      <small class="text-muted">
+        {% if metrics.latest_prediction %}
+          {{ t('analyzed_label') }}: {{ metrics.latest_prediction.created_at[:10] }}
+        {% else %}
+          {{ t('no_analysis_yet') }}
+        {% endif %}
+      </small>
+    </article>
+  </div>
+
+  <!-- Weather Status -->
+  <div class="col-sm-6 col-xxl-3 animate-in delay-4">
+    <article class="metric-card info h-100">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <span class="metric-icon info">
+          <i class="bi bi-cloud-sun"></i>
+        </span>
+        <span class="badge bg-info-subtle text-info">Live</span>
+      </div>
+      <p class="metric-label">{{ t('weather_service_label') }}</p>
+      <h2 class="fs-6 fw-semibold mb-1" style="line-height: 1.3;">
+        {% if metrics.weather_status == 'Ready for city lookup' %}{{ t('ready_for_city_lookup') }}
+        {% elif metrics.weather_status == 'Manual weather input' %}{{ t('manual_weather_input') }}
+        {% else %}{{ t('weather_unavailable') }}{% endif %}
+      </h2>
+      <small class="text-muted">{{ t('api_connected') }}</small>
+    </article>
+  </div>
+</section>
+
+<!-- Main Content Area -->
+<section class="row g-4 mb-4">
+  <!-- Quick Actions Panel -->
+  <div class="col-lg-8">
+    <div class="row g-4">
+      <!-- Quick Actions -->
+      <div class="col-12 animate-in delay-1">
+        <article class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-transparent border-0 pt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 class="h5 mb-1">{{ t('quick_actions') }}</h2>
+                <p class="text-muted small mb-0">{{ t('continue_workflow') }}</p>
+              </div>
+              <a href="#" class="btn btn-sm btn-outline-primary">{{ t('view_all') }}</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="quick-actions-grid">
+              <!-- Analyze Soil -->
+              <a class="quick-action-card" href="{{ url_for('home') }}">
+                <div class="action-icon bg-primary-subtle text-primary">
+                  <i class="bi bi-bezier2"></i>
+                </div>
+                <h3 class="h6 mb-1">{{ t('analyze_soil_title') }}</h3>
+                <p class="text-muted small mb-2">{{ t('get_crop_recommendations') }}</p>
+                <span class="badge bg-primary-subtle text-primary">
+                  <i class="bi bi-lightning-charge"></i> {{ t('quick_test') }}
+                </span>
+              </a>
+
+              <!-- Weather Check -->
+              <a class="quick-action-card" href="{{ url_for('weather') }}">
+                <div class="action-icon bg-info-subtle text-info">
+                  <i class="bi bi-cloud-download"></i>
+                </div>
+                <h3 class="h6 mb-1">{{ t('check_weather_title') }}</h3>
+                <p class="text-muted small mb-2">{{ t('real_time_conditions') }}</p>
+                <span class="badge bg-info-subtle text-info">{{ t('live_data') }}</span>
+              </a>
+
+              <!-- History -->
+              <a class="quick-action-card" href="{{ url_for('history') }}">
+                <div class="action-icon bg-success-subtle text-success">
+                  <i class="bi bi-clock-history"></i>
+                </div>
+                <h3 class="h6 mb-1">{{ t('view_history_title') }}</h3>
+                <p class="text-muted small mb-2">{{ t('past_analyses') }}</p>
+                <span class="badge bg-success-subtle text-success">{{ t('view_all') }}</span>
+              </a>
+
+              <!-- Chatbot -->
+              <a class="quick-action-card" href="{{ url_for('chatbot') }}">
+                <div class="action-icon bg-warning-subtle text-warning">
+                  <i class="bi bi-robot"></i>
+                </div>
+                <h3 class="h6 mb-1">{{ t('ai_assistant_title') }}</h3>
+                <p class="text-muted small mb-2">{{ t('get_farming_advice') }}</p>
+                <span class="badge bg-warning-subtle text-warning">{{ t('chat_now') }}</span>
+              </a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- Recent Activity Timeline -->
+      <div class="col-12 animate-in delay-2">
+        <article class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-0 pt-3">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 class="h5 mb-1">{{ t('recent_activity') }}</h2>
+                <p class="text-muted small mb-0">{{ t('latest_soil_analyses') }}</p>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-secondary active">{{ t('filter_all') }}</button>
+                <button class="btn btn-outline-secondary">{{ t('filter_today') }}</button>
+                <button class="btn btn-outline-secondary">{{ t('filter_week') }}</button>
+              </div>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="timeline">
+              {% if metrics.latest_prediction %}
+              <div class="timeline-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{{ tc(metrics.latest_prediction.crop) }}</strong>
+                    <p class="text-muted small mb-0">{{ t('soil_score_colon') }}: {{ metrics.latest_prediction.soil_score }}%</p>
+                  </div>
+                  <small class="text-muted">{{ metrics.latest_prediction.created_at }}</small>
+                </div>
+              </div>
+              {% endif %}
+
+              <!-- Placeholder items -->
+              <div class="timeline-item">
+                <div class="d-flex justify-content-between align-items-start">
+                  <div>
+                    <strong>{{ t('system_ready') }}</strong>
+                    <p class="text-muted small mb-0">{{ t('dashboard_initialized') }}</p>
+                  </div>
+                  <small class="text-muted">{{ t('just_now') }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Sidebar -->
+  <div class="col-lg-4">
+    <div class="row g-4">
+      <!-- Soil Health Gauge -->
+      <div class="col-12 animate-in delay-1">
+        <article class="card border-0 shadow-sm">
+          <div class="card-body text-center">
+            <h2 class="h6 mb-3">{{ t('soil_health_indicator') }}</h2>
+            <div class="progress-ring" id="soilHealthRing">
+              <svg width="120" height="120" viewBox="0 0 120 120">
+                <circle cx="60" cy="60" r="54" fill="none" stroke="#e9ecef" stroke-width="8"/>
+                <circle cx="60" cy="60" r="54" fill="none" 
+                        stroke="{% if metrics.average_soil_score >= 80 %}#28a745{% elif metrics.average_soil_score >= 60 %}#ffc107{% else %}#dc3545{% endif %}" 
+                        stroke-width="8" 
+                        stroke-dasharray="339.292" 
+                        stroke-dashoffset="{{ 339.292 * (100 - metrics.average_soil_score) / 100 }}"
+                        class="progress-ring-circle"/>
+              </svg>
+              <div class="progress-ring-value">
+                {{ metrics.average_soil_score }}<small>%</small>
+              </div>
+            </div>
+            <p class="text-muted small mt-2">
+              {% if metrics.average_soil_score >= 80 %}
+                {{ t('soil_msg_excellent') }}
+              {% elif metrics.average_soil_score >= 60 %}
+                {{ t('soil_msg_good') }}
+              {% elif metrics.average_soil_score >= 40 %}
+                {{ t('soil_msg_average') }}
+              {% else %}
+                {{ t('soil_msg_poor') }}
+              {% endif %}
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <!-- System Stats -->
+      <div class="col-12 animate-in delay-2">
+        <article class="card border-0 shadow-sm">
+          <div class="card-header bg-transparent border-0 pt-3">
+            <h2 class="h6 mb-0">{{ t('system_overview') }}</h2>
+          </div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span><i class="bi bi-calendar-check text-primary me-2"></i>{{ t('todays_predictions') }}</span>
+              <span class="badge bg-primary-subtle text-primary fs-6">{{ metrics.today_predictions }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <span><i class="bi bi-people text-success me-2"></i>{{ t('registered_users') }}</span>
+              <span class="badge bg-success-subtle text-success fs-6">{{ metrics.registered_users }}</span>
+            </div>
+            {% if metrics.latest_prediction %}
+            <div class="d-flex justify-content-between align-items-center">
+              <span><i class="bi bi-clock text-info me-2"></i>{{ t('last_analysis') }}</span>
+              <span class="badge bg-info-subtle text-info fs-6">{{ metrics.latest_prediction.soil_score }}%</span>
+            </div>
+            {% endif %}
+          </div>
+        </article>
+      </div>
+
+      <!-- Tips & Insights -->
+      <div class="col-12 animate-in delay-3">
+        <article class="card border-0 shadow-sm bg-success-subtle">
+          <div class="card-body">
+            <div class="d-flex align-items-start gap-2">
+              <i class="bi bi-lightbulb text-success fs-5"></i>
+              <div>
+                <h2 class="h6 mb-2">{{ t('pro_tip') }}</h2>
+                <p class="text-muted small mb-0">
+                  {% if metrics.average_soil_score < 60 %}
+                    {{ t('tip_low_score') }}
+                  {% else %}
+                    {{ t('tip_good_score') }}
+                  {% endif %}
+                </p>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Stats Bar -->
+<section class="row g-3 mb-4 animate-in delay-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="row text-center g-3">
+          <div class="col-6 col-md-3">
+            <i class="bi bi-graph-up text-primary fs-4 mb-1"></i>
+            <h3 class="h6 mb-0">{{ metrics.total_predictions }}</h3>
+            <small class="text-muted">{{ t('total_tests') }}</small>
+          </div>
+          <div class="col-6 col-md-3">
+            <i class="bi bi-check-circle text-success fs-4 mb-1"></i>
+            <h3 class="h6 mb-0">{{ metrics.average_soil_score }}%</h3>
+            <small class="text-muted">{{ t('success_rate') }}</small>
+          </div>
+          <div class="col-6 col-md-3">
+            <i class="bi bi-lightning text-warning fs-4 mb-1"></i>
+            <h3 class="h6 mb-0">{{ metrics.today_predictions }}</h3>
+            <small class="text-muted">{{ t('today') }}</small>
+          </div>
+          <div class="col-6 col-md-3">
+            <i class="bi bi-people text-info fs-4 mb-1"></i>
+            <h3 class="h6 mb-0">{{ metrics.registered_users }}</h3>
+            <small class="text-muted">{{ t('users_label') }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  // Initialize Sparkline Charts
+  document.addEventListener('DOMContentLoaded', function() {
+    // Predictions Sparkline
+    const predictionsData = generateSparklineData(7, {{ metrics.total_predictions }});
+    createSparkline('predictionsSparkline', predictionsData, '#2D5A27');
+    
+    // Animate elements on scroll
+    const observerOptions = {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.style.opacity = '1';
+          entry.target.style.transform = 'translateY(0)';
+        }
+      });
+    }, observerOptions);
+    
+    document.querySelectorAll('.animate-in').forEach(el => {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(20px)';
+      el.style.transition = 'all 0.6s ease-out';
+      observer.observe(el);
+    });
+    
+    // Tooltip initialization
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Auto-refresh every 5 minutes
+    setInterval(() => {
+      fetch(window.location.href)
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          // Update specific elements if needed
+        })
+        .catch(console.error);
+    }, 300000);
+  });
+  
+  // Helper Functions
+  function generateSparklineData(points, max) {
+    const data = [];
+    for (let i = 0; i < points; i++) {
+      data.push(Math.floor(Math.random() * max * 0.3) + max * 0.7);
+    }
+    return data;
+  }
+  
+  function createSparkline(elementId, data, color) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const options = {
+      series: [{
+        name: 'Predictions',
+        data: data
+      }],
+      chart: {
+        type: 'line',
+        width: '100%',
+        height: 40,
+        sparkline: {
+          enabled: true
+        },
+        animations: {
+          enabled: true,
+          speed: 800
+        }
+      },
+      stroke: {
+        curve: 'smooth',
+        width: 2
+      },
+      colors: [color],
+      tooltip: {
+        fixed: {
+          enabled: false
+        },
+        x: {
+          show: false
+        },
+        y: {
+          title: {
+            formatter: function() {
+              return '';
+            }
+          }
+        }
+      }
+    };
+    
+    const chart = new ApexCharts(element, options);
+    chart.render();
+  }
+  
+  // Add smooth scrolling
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+</script>
+{% endblock %}

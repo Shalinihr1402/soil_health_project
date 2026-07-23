@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+{% block title %}Report #{{ prediction.id }} | SoilSense{% endblock %}
+
+{% block extra_css %}
+<style>
+  .report-header {
+    background: linear-gradient(135deg, #2D5A27 0%, #4CAF50 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .report-header h1 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .report-id {
+    font-size: 0.85rem;
+    opacity: 0.9;
+  }
+  
+  .stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #e5e7eb;
+    text-align: center;
+    transition: all 0.3s ease;
+  }
+  
+  .stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  }
+  
+  .stat-card .icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.75rem;
+    font-size: 1.25rem;
+  }
+  
+  .stat-card .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  
+  .stat-card .label {
+    color: #6b7280;
+    font-size: 0.8rem;
+  }
+  
+  .info-table th {
+    width: 180px;
+    color: #6b7280;
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  
+  .info-table td {
+    font-weight: 500;
+  }
+  
+  .progress-bar-custom {
+    height: 8px;
+    border-radius: 4px;
+    background: #e5e7eb;
+    overflow: hidden;
+  }
+  
+  .progress-bar-custom .fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+  
+  .crop-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s ease;
+  }
+  
+  .crop-card.recommended {
+    border-color: #28a745;
+    background: #f0fff4;
+  }
+  
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .section-title i {
+    color: #2D5A27;
+  }
+  
+  .btn-download {
+    background: #2D5A27;
+    color: white;
+    border: none;
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-download:hover {
+    background: #234723;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(45, 90, 39, 0.3);
+    color: white;
+  }
+  
+  .btn-print {
+    background: white;
+    color: #2D5A27;
+    border: 2px solid #2D5A27;
+    padding: 0.625rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-print:hover {
+    background: #2D5A27;
+    color: white;
+  }
+  
+  .watermark {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-30deg);
+    font-size: 6rem;
+    color: rgba(0,0,0,0.02);
+    pointer-events: none;
+    z-index: 0;
+    white-space: nowrap;
+  }
+  
+  @media print {
+    .no-print { display: none !important; }
+    body { background: white !important; }
+    .content-area { padding: 0 !important; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="watermark">SoilSense</div>
+
+<!-- Report Header -->
+<div class="report-header">
+  <div class="row align-items-center">
+    <div class="col-md-8">
+      <div class="report-id mb-2">SOIL ANALYSIS REPORT</div>
+      <h1>{{ tc(prediction_text) }} Crop Recommendation</h1>
+      <p class="mb-0 opacity-75">
+        <i class="bi bi-calendar me-1"></i>
+        Generated on {{ prediction.created_at[:10] if prediction.created_at else 'N/A' }} 
+        at {{ prediction.created_at[11:19] if prediction.created_at and prediction.created_at|length > 11 else '' }}
+      </p>
+    </div>
+    <div class="col-md-4 text-md-end mt-3 mt-md-0 no-print">
+      <button class="btn-download me-2" onclick="downloadPDF()">
+        <i class="bi bi-download me-1"></i> Download PDF
+      </button>
+      <button class="btn-print" onclick="window.print()">
+        <i class="bi bi-printer me-1"></i> Print
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="icon bg-success bg-opacity-10 text-success">
+        <i class="bi bi-heart-pulse"></i>
+      </div>
+      <div class="value">{{ score }}%</div>
+      <div class="label">Soil Health Score</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="icon bg-primary bg-opacity-10 text-primary">
+        <i class="bi bi-droplet"></i>
+      </div>
+      <div class="value">{{ water_recommendation.daily_litres_per_sq_m }}</div>
+      <div class="label">L/m²/day Water Need</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="icon bg-warning bg-opacity-10 text-warning">
+        <i class="bi bi-flower1"></i>
+      </div>
+      <div class="value">{{ yield_potential.potential_index }}%</div>
+      <div class="label">Yield Potential</div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="stat-card">
+      <div class="icon bg-info bg-opacity-10 text-info">
+        <i class="bi bi-tree"></i>
+      </div>
+      <div class="value">{{ fertilizer_plan['items']|length if fertilizer_plan and fertilizer_plan['items'] else 0 }}</div>
+      <div class="label">Deficiency Actions</div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div class="row g-4">
+  <!-- Left Column -->
+  <div class="col-lg-8">
+    <!-- Prediction Details -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-clipboard-data"></i> Prediction Details
+        </div>
+      </div>
+      <div class="card-body">
+        <table class="table info-table mb-0">
+          <tr>
+            <th>Report ID</th>
+            <td>#{{ prediction.id }}</td>
+            <th>Date</th>
+            <td>{{ prediction.created_at[:10] if prediction.created_at else 'N/A' }}</td>
+          </tr>
+          <tr>
+            <th>Recommended Crop</th>
+            <td><span class="badge bg-success fs-6">{{ tc(prediction_text) }}</span></td>
+            <th>Soil Status</th>
+            <td>
+              <span class="badge {% if soil_status == 'Excellent' %}bg-success{% elif soil_status == 'Good' %}bg-info{% elif soil_status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+                {{ soil_status }}
+              </span>
+            </td>
+          </tr>
+          <tr>
+            <th>Fertilizer</th>
+            <td>{{ tf(fertilizer) }}</td>
+            <th>Soil Score</th>
+            <td><strong>{{ score }}%</strong></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Input Parameters -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-sliders"></i> Input Parameters
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Nitrogen (N)</div>
+              <div class="fw-bold fs-5">{{ values.N }} <small class="text-muted fs-6">kg/ha</small></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Phosphorus (P)</div>
+              <div class="fw-bold fs-5">{{ values.P }} <small class="text-muted fs-6">kg/ha</small></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Potassium (K)</div>
+              <div class="fw-bold fs-5">{{ values.K }} <small class="text-muted fs-6">kg/ha</small></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Soil pH</div>
+              <div class="fw-bold fs-5">{{ values.ph }}</div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Temperature</div>
+              <div class="fw-bold fs-5">{{ values.temperature }} <small class="text-muted fs-6">°C</small></div>
+            </div>
+          </div>
+          <div class="col-6 col-md-4">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Humidity</div>
+              <div class="fw-bold fs-5">{{ values.humidity }} <small class="text-muted fs-6">%</small></div>
+            </div>
+          </div>
+          <div class="col-12 col-md-4">
+            <div class="p-3 bg-light rounded text-center">
+              <div class="text-muted small mb-1">Rainfall</div>
+              <div class="fw-bold fs-5">{{ values.rainfall }} <small class="text-muted fs-6">mm</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Crop Recommendations -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-trophy"></i> Top Crop Recommendations
+        </div>
+      </div>
+      <div class="card-body">
+        {% if top_crops %}
+          <div class="row g-3">
+            {% for crop in top_crops %}
+            <div class="col-md-4">
+              <div class="crop-card {% if loop.first %}recommended{% endif %} text-center">
+                {% if loop.first %}
+                <span class="badge bg-success mb-2">Recommended</span>
+                {% endif %}
+                <h3 class="h5 mb-2">{{ tc(crop.crop) }}</h3>
+                <div class="progress-bar-custom mb-2">
+                  <div class="fill bg-success" style="width: {{ crop.probability }}%"></div>
+                </div>
+                <div class="fw-bold text-success">{{ crop.probability }}%</div>
+                <small class="text-muted">Confidence Score</small>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-muted">No crop recommendations available.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Nutrient Analysis -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-droplet-half"></i> Nutrient Analysis
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          {% if nutrient_analysis %}
+            {% for nutrient in nutrient_analysis %}
+            <div class="col-md-6">
+              <div class="card bg-light border-0">
+                <div class="card-body">
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h4 class="h6 mb-0">{{ nutrient.nutrient }}</h4>
+                    <span class="badge {% if nutrient.status == 'Adequate' %}bg-success{% elif nutrient.status == 'Deficient' %}bg-danger{% else %}bg-warning{% endif %}">
+                      {{ nutrient.status }}
+                    </span>
+                  </div>
+                  <p class="small text-muted mb-0">{{ nutrient.detail }}</p>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Fertilizer Plan -->
+    {% if fertilizer_plan and fertilizer_plan['items'] %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-basket"></i> Fertilizer Plan
+        </div>
+      </div>
+      <div class="card-body">
+        {% for item in fertilizer_plan['items'] %}
+        <div class="alert alert-info d-flex mb-2">
+          <i class="bi bi-info-circle me-2 mt-1"></i>
+          <div>
+            <strong>{{ item.nutrient }}</strong> (Deficit: {{ item.deficit }} units)
+            <br><small>{{ item.quantity }}</small>
+            <br><small class="text-muted">Organic alternative: {{ item.organic_alternative }}</small>
+          </div>
+        </div>
+        {% endfor %}
+        <p class="small text-muted mt-3">{{ fertilizer_plan.explanation }}</p>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Crop Explanations -->
+    {% if crop_explanations %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-chat-square-text"></i> Why These Crops?
+        </div>
+      </div>
+      <div class="card-body">
+        {% for explanation in crop_explanations %}
+        <div class="mb-4">
+          <h4 class="h6">{{ tc(explanation.crop) }}
+            <span class="badge bg-success ms-2">{{ explanation.confidence }}% confidence</span>
+          </h4>
+          <p class="small text-muted mb-2">{{ explanation.reason }}</p>
+          <div class="row g-2">
+            <div class="col-sm-6">
+              <small class="text-success">
+                <i class="bi bi-check-circle me-1"></i>{{ explanation.benefits }}
+              </small>
+            </div>
+            <div class="col-sm-6">
+              {% if explanation.risks %}
+                {% for risk in explanation.risks %}
+                <small class="text-warning d-block">
+                  <i class="bi bi-exclamation-triangle me-1"></i>{{ risk }}
+                </small>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if not loop.last %}<hr>{% endif %}
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right Sidebar -->
+  <div class="col-lg-4">
+    <!-- Report Info -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-info-circle"></i> Report Info
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Report ID</span>
+          <strong>#{{ prediction.id }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Generated</span>
+          <strong>{{ prediction.created_at[:10] if prediction.created_at else 'N/A' }}</strong>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+          <span class="text-muted small">Status</span>
+          <span class="badge {% if soil_status == 'Excellent' %}bg-success{% elif soil_status == 'Good' %}bg-info{% elif soil_status == 'Average' %}bg-warning{% else %}bg-danger{% endif %}">
+            {{ soil_status }}
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Water Management -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-droplet"></i> Water Management
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="text-center mb-3">
+          <span class="display-4 fw-bold text-primary">{{ water_recommendation.daily_litres_per_sq_m }}</span>
+          <small class="text-muted d-block">L/m² per day</small>
+        </div>
+        <div class="alert alert-primary">
+          <i class="bi bi-info-circle me-2"></i>{{ water_recommendation.schedule }}
+        </div>
+        <small class="text-muted">{{ water_recommendation.explanation }}</small>
+      </div>
+    </div>
+
+    <!-- Smart Suggestions -->
+    {% if smart_suggestions %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-0 pt-3">
+        <div class="section-title mb-0">
+          <i class="bi bi-lightbulb text-warning"></i> Smart Suggestions
+        </div>
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled mb-0">
+          {% for suggestion in smart_suggestions %}
+          <li class="mb-2 small">
+            <i class="bi bi-check2 text-success me-2"></i>{{ suggestion }}
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Yield Potential -->
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-body text-center">
+        <div class="section-title justify-content-center mb-3">
+          <i class="bi bi-graph-up"></i> Yield Potential
+        </div>
+        <div class="display-4 fw-bold text-success mb-2">{{ yield_potential.potential_index }}%</div>
+        <p class="text-muted small mb-2">{{ yield_potential.confidence }} confidence level</p>
+        <p class="text-muted small">{{ yield_potential.explanation }}</p>
+      </div>
+    </div>
+
+    <!-- Download Options -->
+    <div class="card border-0 shadow-sm mb-4 no-print">
+      <div class="card-body">
+        <h3 class="h6 mb-3">Download Report</h3>
+        <button class="btn btn-success w-100 mb-2" onclick="downloadPDF()">
+          <i class="bi bi-file-pdf me-2"></i>Download as PDF
+        </button>
+        <button class="btn btn-outline-secondary w-100" onclick="window.print()">
+          <i class="bi bi-printer me-2"></i>Print Report
+        </button>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="d-grid gap-2 no-print">
+      <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+        <i class="bi bi-plus-lg me-1"></i> New Prediction
+      </a>
+      <a href="{{ url_for('history') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Back to History
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include html2pdf library for PDF generation -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<script>
+  function downloadPDF() {
+    // Show loading toast
+    showToast('Generating PDF...', 'info');
+    
+    // Hide no-print elements
+    const noPrintElements = document.querySelectorAll('.no-print');
+    noPrintElements.forEach(el => el.style.display = 'none');
+    
+    // Hide sidebar and topbar for PDF
+    const sidebar = document.querySelector('.sidebar');
+    const topbar = document.querySelector('.topbar');
+    const footer = document.querySelector('footer');
+    const watermark = document.querySelector('.watermark');
+    
+    if (sidebar) sidebar.style.display = 'none';
+    if (topbar) topbar.style.display = 'none';
+    if (footer) footer.style.display = 'none';
+    
+    // Configure PDF options
+    const opt = {
+      margin: [10, 10, 10, 10],
+      filename: 'SoilSense_Report_{{ prediction.id }}_{{ prediction.created_at[:10] if prediction.created_at else "date" }}.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        letterRendering: true
+      },
+      jsPDF: { 
+        unit: 'mm', 
+        format: 'a4', 
+        orientation: 'portrait' 
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+    
+    // Generate PDF
+    const element = document.querySelector('.content-area');
+    
+    html2pdf().set(opt).from(element).save().then(() => {
+      // Restore elements
+      noPrintElements.forEach(el => el.style.display = '');
+      if (sidebar) sidebar.style.display = '';
+      if (topbar) topbar.style.display = '';
+      if (footer) footer.style.display = '';
+      if (watermark) watermark.style.display = '';
+      
+      showToast('PDF downloaded successfully!', 'success');
+    }).catch((error) => {
+      // Restore elements on error
+      noPrintElements.forEach(el => el.style.display = '');
+      if (sidebar) sidebar.style.display = '';
+      if (topbar) topbar.style.display = '';
+      if (footer) footer.style.display = '';
+      if (watermark) watermark.style.display = '';
+      
+      console.error('PDF generation failed:', error);
+      showToast('PDF generation failed. Please try printing instead.', 'danger');
+    });
+  }
+  
+  function showToast(message, type = 'info') {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+      // Create toast container if it doesn't exist
+      const container = document.createElement('div');
+      container.id = 'toastContainer';
+      container.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+      document.body.appendChild(container);
+    }
+    
+    const container = document.getElementById('toastContainer');
+    const toastId = 'toast-' + Date.now();
+    
+    const bgClass = {
+      'success': 'bg-success text-white',
+      'danger': 'bg-danger text-white',
+      'warning': 'bg-warning',
+      'info': 'bg-info text-white'
+    }[type] || 'bg-info text-white';
+    
+    const iconClass = {
+      'success': 'bi-check-circle',
+      'danger': 'bi-x-circle',
+      'warning': 'bi-exclamation-triangle',
+      'info': 'bi-info-circle'
+    }[type] || 'bi-info-circle';
+    
+    const toastHTML = `
+      <div id="${toastId}" class="toast align-items-center ${bgClass} border-0" role="alert">
+        <div class="d-flex">
+          <div class="toast-body">
+            <i class="bi ${iconClass} me-2"></i>${message}
+          </div>
+          <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', toastHTML);
+    const toastElement = document.getElementById(toastId);
+    const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+    toast.show();
+    
+    toastElement.addEventListener('hidden.bs.toast', () => toastElement.remove());
+  }
+</script>
+{% endblock %}

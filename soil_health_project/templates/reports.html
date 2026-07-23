@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+
+{% block content %}
+<section class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <p class="eyebrow mb-1">{{ t('reports_eyebrow') }}</p>
+    <h1>{{ t('generated_reports') }}</h1>
+    <p class="text-body-secondary mb-0">{{ t('reports_desc') }}</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('home') }}">
+    <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+  </a>
+</section>
+
+<section class="panel-card">
+  <div class="panel-header d-flex justify-content-between align-items-center">
+    <div>
+      <h2>{{ t('recent_reports') }}</h2>
+      <p>{{ t('showing_latest_reports').replace('{n}', predictions|length|string) }}</p>
+    </div>
+  </div>
+
+  {% if predictions %}
+  <div class="table-responsive">
+    <table class="table table-hover mb-0">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 50px;">#</th>
+          <th>{{ t('crop') }}</th>
+          <th>{{ t('score') }}</th>
+          <th>{{ t('fertilizer') }}</th>
+          <th>{{ t('date') }}</th>
+          <th style="width: 100px;">{{ t('action') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pred in predictions %}
+        <tr>
+          <td class="text-muted small">{{ pred.id }}</td>
+          <td class="fw-semibold">{{ tc(pred.crop) }}</td>
+          <td>
+            <span class="badge {% if pred.soil_score >= 80 %}bg-success{% elif pred.soil_score >= 60 %}bg-info{% elif pred.soil_score >= 40 %}bg-warning{% else %}bg-danger{% endif %}">
+              {{ pred.soil_score }}%
+            </span>
+          </td>
+          <td class="small text-muted">{{ tf(pred.fertilizer) }}</td>
+          <td class="small text-muted">{{ pred.created_at[:16] if pred.created_at else 'N/A' }}</td>
+          <td>
+            <a href="{{ url_for('report', prediction_id=pred.id) }}" class="btn btn-sm btn-outline-primary" title="{{ t('view_report') }}">
+              <i class="bi bi-eye"></i> {{ t('view') }}
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="text-center py-5">
+    <i class="bi bi-file-earmark-bar-graph" style="font-size: 4rem; color: #ccc;"></i>
+    <h3 class="h5 mt-3">{{ t('no_reports_yet') }}</h3>
+    <p class="text-muted">{{ t('reports_auto_desc') }}</p>
+    <a href="{{ url_for('home') }}" class="btn btn-primary">
+      <i class="bi bi-plus-lg me-1"></i> {{ t('new_prediction') }}
+    </a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+{% block title %}Prediction Results | SoilSense{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<section class="page-heading d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <p class="eyebrow mb-1">PREDICTION RESULTS</p>
+    <h1>Crop Recommendation</h1>
+    <p class="text-body-secondary mb-0">Based on your soil and environmental inputs.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-primary" href="{{ url_for('home') }}">
+      <i class="bi bi-arrow-repeat me-1"></i> New Analysis
+    </a>
+    <a class="btn btn-primary" href="{{ url_for('dashboard') }}">
+      <i class="bi bi-grid-1x2 me-1"></i> Dashboard
+    </a>
+  </div>
+</section>
+
+<!-- Quick Stats -->
+<section class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <article class="metric-card">
+      <span class="metric-icon success"><i class="bi bi-heart-pulse"></i></span>
+      <div>
+        <p>Soil Health</p>
+        <h2>{{ score }}%</h2>
+        <small>{{ soil_status }}</small>
+      </div>
+    </article>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <article class="metric-card">
+      <span class="metric-icon primary"><i class="bi bi-droplet"></i></span>
+      <div>
+        <p>Water Need</p>
+        <h2>{{ water_recommendation.daily_litres_per_sq_m }}</h2>
+        <small>L/m²/day estimate</small>
+      </div>
+    </article>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <article class="metric-card">
+      <span class="metric-icon warning"><i class="bi bi-flower1"></i></span>
+      <div>
+        <p>Yield Potential</p>
+        <h2>{{ yield_potential.potential_index }}%</h2>
+        <small>{{ yield_potential.confidence }} confidence</small>
+      </div>
+    </article>
+  </div>
+  <div class="col-sm-6 col-xl-3">
+    <article class="metric-card">
+      <span class="metric-icon info"><i class="bi bi-tree"></i></span>
+      <div>
+        <p>Fertilizer Plan</p>
+        <!-- FIXED: Access the items key from the dictionary -->
+        <h2>{{ fertilizer_plan['items']|length if fertilizer_plan['items'] else 0 }}</h2>
+        <small>Deficiency actions</small>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Main Results -->
+<section class="row g-4">
+  <!-- Primary Recommendation -->
+  <div class="col-lg-8">
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-success text-white">
+        <h2 class="h5 mb-0">
+          <i class="bi bi-star-fill me-2"></i>Recommended Crop: {{ tc(prediction) }}
+        </h2>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <div class="col-md-6">
+            <h3 class="h6 text-muted mb-3">Top Recommendations</h3>
+            {% if top_crops %}
+              {% for crop in top_crops %}
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="fw-semibold">{{ tc(crop.crop) }}</span>
+                <span class="badge bg-success rounded-pill">{{ crop.probability }}%</span>
+              </div>
+              <div class="progress mb-3" style="height: 6px;">
+                <div class="progress-bar bg-success" style="width: {{ crop.probability }}%"></div>
+              </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted">No crop recommendations available.</p>
+            {% endif %}
+          </div>
+          <div class="col-md-6">
+            <h3 class="h6 text-muted mb-3">Fertilizer Recommendation</h3>
+            <div class="p-3 bg-light rounded">
+              <p class="mb-1 fw-semibold">{{ tf(fertilizer) }}</p>
+              <small class="text-muted">Apply based on soil test results</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Detailed Analysis -->
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent">
+        <h3 class="h5 mb-0">Detailed Analysis</h3>
+      </div>
+      <div class="card-body">
+        <!-- Nutrient Analysis -->
+        <h4 class="h6 text-muted mb-3">Nutrient Status</h4>
+        <div class="row g-2 mb-4">
+          {% if nutrient_analysis %}
+            {% for nutrient in nutrient_analysis %}
+            <div class="col-sm-6">
+              <div class="d-flex justify-content-between align-items-center p-2 bg-light rounded">
+                <span>{{ nutrient.nutrient }}</span>
+                <span class="badge {% if nutrient.status == 'Adequate' %}bg-success{% else %}bg-warning{% endif %}">
+                  {{ nutrient.status }}
+                </span>
+              </div>
+              <small class="text-muted">{{ nutrient.detail }}</small>
+            </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+
+        <!-- Fertilizer Plan -->
+        <h4 class="h6 text-muted mb-3">Fertilizer Plan</h4>
+        {% if fertilizer_plan and fertilizer_plan['items'] %}
+          {% for item in fertilizer_plan['items'] %}
+          <div class="alert alert-info d-flex align-items-center mb-2">
+            <i class="bi bi-info-circle me-2"></i>
+            <div>
+              <strong>{{ item.nutrient }}:</strong> {{ item.quantity }}
+              <br><small class="text-muted">Organic alternative: {{ item.organic_alternative }}</small>
+            </div>
+          </div>
+          {% endfor %}
+          <p class="text-muted small">{{ fertilizer_plan.explanation }}</p>
+        {% else %}
+          <p class="text-muted">No fertilizer needed. Nutrients are at optimal levels.</p>
+        {% endif %}
+      </div>
+    </article>
+
+    <!-- Crop Explanations -->
+    {% if crop_explanations %}
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-transparent">
+        <h3 class="h5 mb-0">Why These Crops?</h3>
+      </div>
+      <div class="card-body">
+        {% for explanation in crop_explanations %}
+        <div class="mb-4">
+          <h4 class="h6">{{ tc(explanation.crop) }}</h4>
+          <p class="text-muted small mb-2">{{ explanation.reason }}</p>
+          <div class="row g-2">
+            <div class="col-sm-6">
+              <small class="text-success">
+                <i class="bi bi-check-circle me-1"></i>{{ explanation.benefits }}
+              </small>
+            </div>
+            <div class="col-sm-6">
+              {% if explanation.risks %}
+                {% for risk in explanation.risks %}
+                <small class="text-warning d-block">
+                  <i class="bi bi-exclamation-triangle me-1"></i>{{ risk }}
+                </small>
+                {% endfor %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        {% if not loop.last %}<hr>{% endif %}
+        {% endfor %}
+      </div>
+    </article>
+    {% endif %}
+  </div>
+
+  <!-- Sidebar -->
+  <div class="col-lg-4">
+    <!-- Water Recommendation -->
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="h5 mb-3">Water Management</h3>
+        <div class="mb-3">
+          <h4 class="h2 text-primary mb-0">{{ water_recommendation.daily_litres_per_sq_m }} <small class="fs-6">L/m²</small></h4>
+          <small class="text-muted">Daily water requirement</small>
+        </div>
+        <div class="alert alert-primary">
+          <i class="bi bi-droplet me-2"></i>{{ water_recommendation.schedule }}
+        </div>
+        <small class="text-muted">{{ water_recommendation.explanation }}</small>
+      </div>
+    </article>
+
+    <!-- Smart Suggestions -->
+    {% if smart_suggestions %}
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="h5 mb-3">
+          <i class="bi bi-lightbulb text-warning me-2"></i>Smart Suggestions
+        </h3>
+        <ul class="list-unstyled mb-0">
+          {% for suggestion in smart_suggestions %}
+          <li class="mb-2">
+            <small><i class="bi bi-check2 text-success me-2"></i>{{ suggestion }}</small>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </article>
+    {% endif %}
+
+    <!-- Yield Potential -->
+    <article class="card border-0 shadow-sm mb-4">
+      <div class="card-body">
+        <h3 class="h5 mb-3">Yield Potential</h3>
+        <div class="text-center">
+          <div class="display-4 fw-bold text-success mb-2">{{ yield_potential.potential_index }}%</div>
+          <p class="text-muted small">{{ yield_potential.confidence }} confidence level</p>
+          <p class="text-muted small">{{ yield_potential.explanation }}</p>
+        </div>
+      </div>
+    </article>
+
+    <!-- Input Summary -->
+    <article class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h3 class="h5 mb-3">Your Inputs</h3>
+        <div class="row g-2">
+          <div class="col-6">
+            <small class="text-muted d-block">Nitrogen</small>
+            <strong>{{ N }}</strong>
+          </div>
+          <div class="col-6">
+            <small class="text-muted d-block">Phosphorus</small>
+            <strong>{{ P }}</strong>
+          </div>
+          <div class="col-6">
+            <small class="text-muted d-block">Potassium</small>
+            <strong>{{ K }}</strong>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- Actions -->
+<section class="text-center mt-4">
+  <a href="{{ url_for('home') }}" class="btn btn-primary btn-lg">
+    <i class="bi bi-plus-lg me-2"></i>New Prediction
+  </a>
+  <button class="btn btn-outline-primary btn-lg ms-2" onclick="window.print()">
+    <i class="bi bi-printer me-2"></i>Print Results
+  </button>
+</section>
+{% endblock %}

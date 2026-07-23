@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Weather{% endblock %}
+
+{% block content %}
+<section class="page-heading mb-4">
+  <p class="eyebrow mb-1">{{ t('weather_eyebrow') }}</p>
+  <h1>{{ t('check_weather_conditions') }}</h1>
+  <p class="text-body-secondary mb-0">{{ t('check_weather_desc') }}</p>
+</section>
+
+{% if not weather_configured %}
+<div class="alert alert-warning">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>
+  {{ t('weather_not_configured') }}
+</div>
+{% endif %}
+
+<div class="row g-4">
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <form method="post" action="{{ url_for('weather') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-3">
+            <label class="form-label" for="city">{{ t('city_label') }}</label>
+            <input type="text" class="form-control" id="city" name="city"
+                   value="{{ city }}" placeholder="e.g., Bengaluru" {% if not weather_configured %}disabled{% endif %} required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100" {% if not weather_configured %}disabled{% endif %}>
+            <i class="bi bi-search me-1"></i> {{ t('check_weather') }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    {% if temperature is not none and humidity is not none %}
+    <div class="metric-card h-100">
+      <span class="metric-icon info"><i class="bi bi-cloud-sun"></i></span>
+      <div>
+        <p>{{ t('current_conditions_in') }} {{ city|title }}</p>
+        <h2>{{ temperature }}&deg;C &middot; {{ humidity }}% {{ t('humidity_word') }}</h2>
+        <a class="btn btn-sm btn-outline-primary mt-2" href="{{ url_for('home') }}">
+          <i class="bi bi-plus-lg me-1"></i> {{ t('use_in_new_prediction') }}
+        </a>
+      </div>
+    </div>
+    {% elif searched %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-cloud-slash" style="font-size: 3rem;"></i>
+      <p class="mt-3 mb-0">{{ t('no_weather_data') }}</p>
+    </div>
+    {% else %}
+    <div class="text-center py-5 text-muted">
+      <i class="bi bi-cloud-sun" style="font-size: 3rem;"></i>
+      <p class="mt-3 mb-0">{{ t('enter_city_prompt') }}</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
