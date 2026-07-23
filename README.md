@@ -83,6 +83,7 @@ A comprehensive web-based soil health analytics platform that leverages machine 
 
 ## 📋 Requirements
  How to Run
+ 
 1. Clone the Repository
 bash
 git clone https://github.com/Shalinihr1402/soil_health_project.git
@@ -91,10 +92,11 @@ cd soil_health_project
 bash
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-3. Install Dependencies
+
+4. Install Dependencies
 bash
 pip install -r requirements.txt
-4. Set Up Environment Variables
+5. Set Up Environment Variables
 Create a .env file in the root directory with:
 
 Code
@@ -103,12 +105,14 @@ FLASK_ENV=development
 SECRET_KEY=your_secret_key_here
 OPENWEATHER_API_KEY=your_openweather_api_key
 DATABASE_URL=sqlite:///soil_health.db
+
 5. Initialize Database
 bash
 python
 >>> from app import db
 >>> db.create_all()
 >>> exit()
+
 6. Run the Application
 bash
 flask run
